@@ -1,0 +1,153 @@
+import { useState, useEffect, useCallback } from 'react';
+import { FinanceData, Transaction, Category, Card, DEFAULT_CATEGORIES, DEFAULT_CARDS } from '@/types/finance';
+
+const STORAGE_KEY = 'emoji-finance-data';
+
+const getInitialData = (): FinanceData => {
+  if (typeof window === 'undefined') {
+    return { categories: DEFAULT_CATEGORIES, cards: DEFAULT_CARDS, transactions: [] };
+  }
+  
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (stored) {
+    try {
+      return JSON.parse(stored);
+    } catch {
+      return { categories: DEFAULT_CATEGORIES, cards: DEFAULT_CARDS, transactions: [] };
+    }
+  }
+  return { categories: DEFAULT_CATEGORIES, cards: DEFAULT_CARDS, transactions: [] };
+};
+
+export function useFinanceData() {
+  const [data, setData] = useState<FinanceData>(getInitialData);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  }, [data]);
+
+  const addTransaction = useCallback((transaction: Omit<Transaction, 'id' | 'createdAt'>) => {
+    const newTransaction: Transaction = {
+      ...transaction,
+      id: crypto.randomUUID(),
+      createdAt: Date.now(),
+    };
+    setData(prev => ({
+      ...prev,
+      transactions: [newTransaction, ...prev.transactions],
+    }));
+  }, []);
+
+  const deleteTransaction = useCallback((id: string) => {
+    setData(prev => ({
+      ...prev,
+      transactions: prev.transactions.filter(t => t.id !== id),
+    }));
+  }, []);
+
+  const addCategory = useCallback((category: Omit<Category, 'id'>) => {
+    const newCategory: Category = {
+      ...category,
+      id: crypto.randomUUID(),
+    };
+    setData(prev => ({
+      ...prev,
+      categories: [...prev.categories, newCategory],
+    }));
+  }, []);
+
+  const updateCategory = useCallback((id: string, updates: Partial<Omit<Category, 'id'>>) => {
+    setData(prev => ({
+      ...prev,
+      categories: prev.categories.map(c => c.id === id ? { ...c, ...updates } : c),
+    }));
+  }, []);
+
+  const deleteCategory = useCallback((id: string) => {
+    setData(prev => ({
+      ...prev,
+      categories: prev.categories.filter(c => c.id !== id),
+    }));
+  }, []);
+
+  const addCard = useCallback((card: Omit<Card, 'id'>) => {
+    const newCard: Card = {
+      ...card,
+      id: crypto.randomUUID(),
+    };
+    setData(prev => ({
+      ...prev,
+      cards: [...prev.cards, newCard],
+    }));
+  }, []);
+
+  const updateCard = useCallback((id: string, updates: Partial<Omit<Card, 'id'>>) => {
+    setData(prev => ({
+      ...prev,
+      cards: prev.cards.map(c => c.id === id ? { ...c, ...updates } : c),
+    }));
+  }, []);
+
+  const deleteCard = useCallback((id: string) => {
+    setData(prev => ({
+      ...prev,
+      cards: prev.cards.filter(c => c.id !== id),
+    }));
+  }, []);
+
+  const getBalance = useCallback(() => {
+    return data.transactions.reduce((acc, t) => {
+      return t.type === 'income' ? acc + t.amount : acc - t.amount;
+    }, 0);
+  }, [data.transactions]);
+
+  const getCategoryById = useCallback((id: string) => {
+    return data.categories.find(c => c.id === id);
+  }, [data.categories]);
+
+  const getCardById = useCallback((id: string) => {
+    return data.cards.find(c => c.id === id);
+  }, [data.cards]);
+
+  const exportData = useCallback(() => {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `emoji-finance-backup-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [data]);
+
+  const importData = useCallback((file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const imported = JSON.parse(e.target?.result as string) as FinanceData;
+        if (imported.categories && imported.cards && imported.transactions) {
+          setData(imported);
+        }
+      } catch {
+        console.error('Error importing data');
+      }
+    };
+    reader.readAsText(file);
+  }, []);
+
+  return {
+    ...data,
+    addTransaction,
+    deleteTransaction,
+    addCategory,
+    updateCategory,
+    deleteCategory,
+    addCard,
+    updateCard,
+    deleteCard,
+    getBalance,
+    getCategoryById,
+    getCardById,
+    exportData,
+    importData,
+  };
+}
