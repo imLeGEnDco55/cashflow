@@ -9,6 +9,9 @@ export interface Card {
   name: string;
   type: 'credit' | 'debit';
   colorEmoji: string;
+  // For credit cards only
+  cutOffDay?: number; // Day of month (1-31)
+  paymentDay?: number; // Day of month (1-31)
 }
 
 export const CARD_COLORS = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪', '🟫', '⬛', '⬜'] as const;

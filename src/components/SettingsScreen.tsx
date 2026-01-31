@@ -40,11 +40,16 @@ export function SettingsScreen() {
   const [newCardName, setNewCardName] = useState('');
   const [newCardType, setNewCardType] = useState<'credit' | 'debit'>('debit');
   const [newCardColor, setNewCardColor] = useState('🟦');
+  const [newCutOffDay, setNewCutOffDay] = useState<number>(15);
+  const [newPaymentDay, setNewPaymentDay] = useState<number>(1);
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
   const [editingCard, setEditingCard] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [showAddCard, setShowAddCard] = useState(false);
+
+  // Generate days 1-31 for select options
+  const days = Array.from({ length: 31 }, (_, i) => i + 1);
 
   const handleAddCategory = () => {
     if (!newEmoji || !newDescription) return;
@@ -56,10 +61,20 @@ export function SettingsScreen() {
 
   const handleAddCard = () => {
     if (!newCardName) return;
-    addCard({ name: newCardName, type: newCardType, colorEmoji: newCardColor });
+    addCard({ 
+      name: newCardName, 
+      type: newCardType, 
+      colorEmoji: newCardColor,
+      ...(newCardType === 'credit' && {
+        cutOffDay: newCutOffDay,
+        paymentDay: newPaymentDay,
+      })
+    });
     setNewCardName('');
     setNewCardType('debit');
     setNewCardColor('🟦');
+    setNewCutOffDay(15);
+    setNewPaymentDay(1);
     setShowAddCard(false);
   };
 
@@ -240,6 +255,52 @@ export function SettingsScreen() {
                       </SelectContent>
                     </Select>
                   </div>
+                  
+                  {/* Credit card specific fields */}
+                  {newCardType === 'credit' && (
+                    <div className="space-y-4 p-3 rounded-lg bg-muted/50 border border-primary/20">
+                      <p className="text-sm font-medium text-primary">📅 Fechas de la tarjeta</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs text-muted-foreground">Día de corte</label>
+                          <Select 
+                            value={newCutOffDay.toString()} 
+                            onValueChange={(v) => setNewCutOffDay(parseInt(v))}
+                          >
+                            <SelectTrigger className="h-9">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {days.map((day) => (
+                                <SelectItem key={day} value={day.toString()}>
+                                  {day}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <label className="text-xs text-muted-foreground">Día de pago</label>
+                          <Select 
+                            value={newPaymentDay.toString()} 
+                            onValueChange={(v) => setNewPaymentDay(parseInt(v))}
+                          >
+                            <SelectTrigger className="h-9">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {days.map((day) => (
+                                <SelectItem key={day} value={day.toString()}>
+                                  {day}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
                   <Button onClick={handleAddCard} className="w-full gradient-secondary">
                     Agregar Tarjeta
                   </Button>
@@ -292,9 +353,17 @@ export function SettingsScreen() {
                     <>
                       <div className="flex-1">
                         <p className="font-medium">{card.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {card.type === 'credit' ? 'Crédito' : 'Débito'}
-                        </p>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span>{card.type === 'credit' ? 'Crédito' : 'Débito'}</span>
+                          {card.type === 'credit' && card.cutOffDay && card.paymentDay && (
+                            <>
+                              <span>•</span>
+                              <span>Corte: {card.cutOffDay}</span>
+                              <span>•</span>
+                              <span>Pago: {card.paymentDay}</span>
+                            </>
+                          )}
+                        </div>
                       </div>
                       <Button
                         size="icon"
