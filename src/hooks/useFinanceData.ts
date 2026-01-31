@@ -11,7 +11,12 @@ const getInitialData = (): FinanceData => {
   const stored = localStorage.getItem(STORAGE_KEY);
   if (stored) {
     try {
-      return JSON.parse(stored);
+      const parsed = JSON.parse(stored);
+      return {
+        categories: Array.isArray(parsed.categories) ? parsed.categories : DEFAULT_CATEGORIES,
+        cards: Array.isArray(parsed.cards) ? parsed.cards : DEFAULT_CARDS,
+        transactions: Array.isArray(parsed.transactions) ? parsed.transactions : [],
+      };
     } catch {
       return { categories: DEFAULT_CATEGORIES, cards: DEFAULT_CARDS, transactions: [] };
     }

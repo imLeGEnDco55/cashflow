@@ -159,8 +159,8 @@ export function HistoryScreen() {
     deleteTransaction 
   } = useFinance();
 
-  const categoryMap = useMemo(() => new Map(categories.map(c => [c.id, c])), [categories]);
-  const cardMap = useMemo(() => new Map(cards.map(c => [c.id, c])), [cards]);
+  const categoryMap = useMemo(() => new Map((categories || []).map(c => [c.id, c])), [categories]);
+  const cardMap = useMemo(() => new Map((cards || []).map(c => [c.id, c])), [cards]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -252,7 +252,7 @@ export function HistoryScreen() {
 
       {/* Transactions List */}
       <div className="flex-1 min-h-0 px-4">
-        {transactions.length === 0 ? (
+        {!transactions || transactions.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-6xl mb-4">📝</p>
             <p className="text-muted-foreground">No hay transacciones aún</p>
