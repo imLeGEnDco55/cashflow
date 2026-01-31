@@ -10,15 +10,12 @@ import { Transaction } from '@/types/finance';
 export function HistoryScreen() {
   const { 
     transactions, 
-    getBalance, 
-    getTotalCreditDebt,
+    balance,
+    totalCreditDebt: totalDebt,
     getCategoryById, 
     getCardById, 
     deleteTransaction 
   } = useFinance();
-
-  const balance = getBalance();
-  const totalDebt = getTotalCreditDebt();
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);

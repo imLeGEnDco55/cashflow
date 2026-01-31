@@ -18,9 +18,9 @@ export function CalculatorScreen() {
     categories, 
     cards, 
     addTransaction, 
-    getBalance, 
-    getTotalCreditDebt,
-    getCreditCardsWithDebt,
+    balance,
+    totalCreditDebt: totalDebt,
+    creditCardsWithDebt,
     getCardById,
   } = useFinance();
   
@@ -29,10 +29,6 @@ export function CalculatorScreen() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showCardSelector, setShowCardSelector] = useState(false);
   const [showPayCardSelector, setShowPayCardSelector] = useState(false);
-
-  const balance = getBalance();
-  const totalDebt = getTotalCreditDebt();
-  const creditCardsWithDebt = getCreditCardsWithDebt();
 
   // Filter out the credit payment category from normal selection (it's used automatically)
   const displayCategories = categories.filter(c => c.id !== 'credit-payment');
