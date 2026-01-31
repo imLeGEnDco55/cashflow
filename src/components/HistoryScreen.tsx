@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Trash2 } from 'lucide-react';
+import { Virtuoso } from 'react-virtuoso';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useFinance } from '@/contexts/FinanceContext';
@@ -250,7 +251,7 @@ export function HistoryScreen() {
       </div>
 
       {/* Transactions List */}
-      <div className="flex-1 overflow-auto px-4">
+      <div className="flex-1 min-h-0 px-4">
         {transactions.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-6xl mb-4">📝</p>
@@ -267,55 +268,56 @@ export function HistoryScreen() {
               const badge = getTransactionBadge(transaction);
 
               return (
-                <Card
-                  key={transaction.id}
-                  className={cn(
-                    "p-4 flex items-center gap-4 animate-slide-up shadow-md hover:shadow-lg transition-shadow",
-                    transaction.type === 'credit_expense' && "border-orange-500/30"
-                  )}
-                  style={{ animationDelay: `${index * 50}ms` }}
-                >
-                  {/* Emoji */}
-                  <div className="text-4xl">{category?.emoji || '❓'}</div>
-
-                  {/* Details */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium truncate">
-                        {category?.description || 'Sin categoría'}
-                      </p>
-                      {badge}
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span>{paymentMethod.emoji}</span>
-                      <span>{paymentMethod.label}</span>
-                      <span>•</span>
-                      <span>{formatDate(transaction.date)}</span>
-                    </div>
-                  </div>
-
-                  {/* Amount */}
-                  <div className={cn(
-                    "text-lg font-bold whitespace-nowrap",
-                    getAmountColor(transaction)
-                  )}>
-                    {getAmountPrefix(transaction)}$
-                    {transaction.amount.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-                  </div>
-
-                  {/* Delete Button */}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => deleteTransaction(transaction.id)}
-                    className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                <div className="pb-3">
+                  <Card
+                    className={cn(
+                      "p-4 flex items-center gap-4 animate-slide-up shadow-md hover:shadow-lg transition-shadow",
+                      transaction.type === 'credit_expense' && "border-orange-500/30"
+                    )}
+                    style={{ animationDelay: `${index < 10 ? index * 50 : 0}ms` }}
                   >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </Card>
+                    {/* Emoji */}
+                    <div className="text-4xl">{category?.emoji || '❓'}</div>
+
+                    {/* Details */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium truncate">
+                          {category?.description || 'Sin categoría'}
+                        </p>
+                        {badge}
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>{paymentMethod.emoji}</span>
+                        <span>{paymentMethod.label}</span>
+                        <span>•</span>
+                        <span>{formatDate(transaction.date)}</span>
+                      </div>
+                    </div>
+
+                    {/* Amount */}
+                    <div className={cn(
+                      "text-lg font-bold whitespace-nowrap",
+                      getAmountColor(transaction)
+                    )}>
+                      {getAmountPrefix(transaction)}$
+                      {transaction.amount.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                    </div>
+
+                    {/* Delete Button */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => deleteTransaction(transaction.id)}
+                      className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </Card>
+                </div>
               );
-            })}
-          </div>
+            }}
+          />
         )}
       </div>
     </div>
