@@ -24,8 +24,10 @@ const Index = () => {
 
   return (
     <FinanceProvider>
-      <div className="min-h-screen max-w-lg mx-auto">
-        {renderScreen()}
+      <div className="h-screen max-w-lg mx-auto flex flex-col overflow-hidden">
+        <div className="flex-1 overflow-hidden relative">
+          {renderScreen()}
+        </div>
         <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
       </div>
     </FinanceProvider>
