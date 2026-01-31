@@ -1,73 +1,101 @@
-# Welcome to your Lovable project
+# 💰 Gestor de Finanzas Personales
 
-## Project info
+¡Bienvenido a tu nuevo **Gestor de Finanzas Personales**! Una aplicación moderna, intuitiva y visualmente atractiva diseñada para ayudarte a tomar el control de tu dinero. Construida con tecnologías web de vanguardia, esta herramienta te permite registrar ingresos, controlar gastos y gestionar tus tarjetas de crédito de manera inteligente.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+---
 
-## How can I edit this code?
+## ✨ Características Principales
 
-There are several ways of editing your application.
+### 📱 Calculadora y Registro Rápido
+*   **Interfaz Intuitiva:** Ingresa montos rápidamente con una calculadora integrada en pantalla grande.
+*   **Categorización Visual:** Asigna categorías a tus movimientos usando una divertida selección de emojis.
+*   **Tipos de Transacción:** Registra fácilmente **Ingresos** (➕) y **Gastos** (➖).
+*   **Métodos de Pago:** Elige si pagaste con **Efectivo** 💵 o con **Tarjeta** 💳.
 
-**Use Lovable**
+### 💳 Gestión Inteligente de Tarjetas de Crédito
+Esta app entiende la diferencia entre gastar dinero real y usar crédito:
+*   **Control de Deuda:** Los gastos con tarjeta de crédito se suman a una deuda acumulada, no se restan de tu balance inmediato.
+*   **Pagos a Tarjeta:** Registra pagos a tus tarjetas para reducir tu deuda y actualizar tu balance real.
+*   **Fechas Clave:** Configura y visualiza tus días de **Corte** y **Pago** para nunca olvidar una fecha límite.
+*   **Visualización de Deuda:** Mira claramente cuánto debes en cada tarjeta.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+### 📊 Estadísticas y Análisis
+*   **Dashboard Visual:** Gráficos de barras y pastel para entender tus finanzas de un vistazo.
+*   **Filtros Temporales:** Analiza tu comportamiento por **Semana**, **Mes**, **Año** o Todo el historial.
+*   **Desglose por Categoría:** Descubre en qué estás gastando más (Comida 🍔, Transporte 🚌, Entretenimiento 🎬, etc.).
+*   **Comparativa:** Visualiza claramente Ingresos vs. Gastos Reales vs. Uso de Crédito.
 
-Changes made via Lovable will be committed automatically to this repo.
+### 📝 Historial Detallado
+*   **Timeline de Movimientos:** Revisa todas tus transacciones ordenadas cronológicamente.
+*   **Información Completa:** Cada entrada muestra categoría, monto, fecha y método de pago.
+*   **Edición:** Elimina transacciones erróneas con un solo toque.
 
-**Use your preferred IDE**
+### ⚙️ Personalización y Ajustes
+*   **Categorías Personalizadas:** Crea tus propias categorías con emojis y descripciones únicas.
+*   **Gestión de Tarjetas:** Agrega tarjetas de Débito y Crédito, personalízalas con nombres y colores.
+*   **Respaldo de Datos:** 💾 **Exporta** toda tu información a un archivo JSON para seguridad e **Importa** datos previamente guardados.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+---
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 🛠️ Tecnologías Utilizadas
 
-Follow these steps:
+Este proyecto ha sido construido con un stack moderno para asegurar rendimiento y mantenibilidad:
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+*   **[React](https://reactjs.org/)** - Biblioteca principal para la interfaz de usuario.
+*   **[TypeScript](https://www.typescriptlang.org/)** - Para un código más robusto y seguro.
+*   **[Vite](https://vitejs.dev/)** - Entorno de desarrollo ultrarrápido.
+*   **[Tailwind CSS](https://tailwindcss.com/)** - Framework de estilos para un diseño moderno y responsivo.
+*   **[shadcn/ui](https://ui.shadcn.com/)** - Componentes de interfaz elegantes y accesibles.
+*   **[Recharts](https://recharts.org/)** - Para gráficos estadísticos hermosos.
+*   **[Lucide React](https://lucide.dev/)** - Iconografía limpia y consistente.
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+---
 
-# Step 3: Install the necessary dependencies.
-npm i
+## 🚀 Instalación y Ejecución Local
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+Si deseas ejecutar este proyecto en tu propia máquina, sigue estos pasos:
 
-**Edit a file directly in GitHub**
+### Prerrequisitos
+Asegúrate de tener instalado [Node.js](https://nodejs.org/) (versión 16 o superior).
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Pasos
 
-**Use GitHub Codespaces**
+1.  **Clona el repositorio:**
+    ```bash
+    git clone <URL_DEL_REPOSITORIO>
+    ```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+2.  **Navega al directorio del proyecto:**
+    ```bash
+    cd <NOMBRE_DEL_PROYECTO>
+    ```
 
-## What technologies are used for this project?
+3.  **Instala las dependencias:**
+    ```bash
+    npm install
+    ```
 
-This project is built with:
+4.  **Inicia el servidor de desarrollo:**
+    ```bash
+    npm run dev
+    ```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+5.  **¡Listo!** Abre tu navegador en la dirección que aparece en la terminal (usualmente `http://localhost:8080`).
 
-## How can I deploy this project?
+---
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+## 🤝 Cómo Contribuir
 
-## Can I connect a custom domain to my Lovable project?
+¡Las contribuciones son bienvenidas! Si tienes ideas para mejorar la app:
 
-Yes, you can!
+1.  Haz un Fork del proyecto.
+2.  Crea una rama para tu funcionalidad (`git checkout -b feature/NuevaFuncionalidad`).
+3.  Haz commit de tus cambios (`git commit -m 'Agrega nueva funcionalidad'`).
+4.  Haz push a la rama (`git push origin feature/NuevaFuncionalidad`).
+5.  Abre un Pull Request.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+---
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+<p align="center">
+  Hecho con ❤️ para ayudarte a dominar tus finanzas.
+</p>
