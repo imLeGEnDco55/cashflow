@@ -1,4 +1,4 @@
-import React, { createContext, useContext, ReactNode } from 'react';
+import { createContext, useContext, ReactNode } from 'react';
 import { useFinanceData } from '@/hooks/useFinanceData';
 
 type FinanceContextType = ReturnType<typeof useFinanceData>;
