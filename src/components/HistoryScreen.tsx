@@ -1,4 +1,4 @@
-import { Trash2, Banknote, CreditCard } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useFinance } from '@/contexts/FinanceContext';
@@ -18,10 +18,10 @@ export function HistoryScreen() {
 
   const getPaymentMethodDisplay = (paymentMethod: string) => {
     if (paymentMethod === 'cash') {
-      return { icon: Banknote, label: 'Efectivo' };
+      return { emoji: '💵', label: 'Efectivo' };
     }
     const card = getCardById(paymentMethod);
-    return { icon: CreditCard, label: card?.name || 'Tarjeta' };
+    return { emoji: card?.colorEmoji || '💳', label: card?.name || 'Tarjeta' };
   };
 
   return (
@@ -52,7 +52,6 @@ export function HistoryScreen() {
             {transactions.map((transaction, index) => {
               const category = getCategoryById(transaction.categoryId);
               const paymentMethod = getPaymentMethodDisplay(transaction.paymentMethod);
-              const PaymentIcon = paymentMethod.icon;
 
               return (
                 <Card
@@ -69,7 +68,7 @@ export function HistoryScreen() {
                       {category?.description || 'Sin categoría'}
                     </p>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <PaymentIcon className="w-3 h-3" />
+                      <span>{paymentMethod.emoji}</span>
                       <span>{paymentMethod.label}</span>
                       <span>•</span>
                       <span>{formatDate(transaction.date)}</span>

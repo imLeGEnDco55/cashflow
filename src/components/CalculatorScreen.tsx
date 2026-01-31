@@ -170,7 +170,7 @@ export function CalculatorScreen() {
                 onClick={() => handleSubmit(card.id)}
                 className="h-14 justify-start text-left"
               >
-                <CreditCard className="w-5 h-5 mr-3 text-primary" />
+                <span className="text-2xl mr-3">{card.colorEmoji}</span>
                 <div>
                   <p className="font-semibold">{card.name}</p>
                   <p className="text-xs text-muted-foreground">
