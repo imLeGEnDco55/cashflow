@@ -98,6 +98,6 @@ describe('CalculatorScreen Performance Benchmark', () => {
 
     console.log(`Benchmark Duration: ${duration.toFixed(2)}ms`);
 
-    expect(duration).toBeGreaterThan(0);
+    expect(duration).toBeLessThan(1000); // e.g., assert performance is under 1s
   });
 });
