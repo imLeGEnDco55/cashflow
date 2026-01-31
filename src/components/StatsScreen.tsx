@@ -34,7 +34,7 @@ const COLORS = [
 ];
 
 export function StatsScreen() {
-  const { transactions, categories, getCategoryById } = useFinance();
+  const { transactions, categories, getCategoryById, getTotalCreditDebt, getCreditCardsWithDebt } = useFinance();
   const [period, setPeriod] = useState<Period>('month');
   const [viewType, setViewType] = useState<ViewType>('all');
 
@@ -57,16 +57,22 @@ export function StatsScreen() {
         endDate = endOfYear(now);
         break;
       default:
-        return transactions.filter(t => 
-          viewType === 'all' || t.type === viewType
-        );
+        return transactions.filter(t => {
+          if (viewType === 'all') return true;
+          if (viewType === 'income') return t.type === 'income';
+          // For expenses, include both real expenses and credit expenses
+          return t.type === 'expense' || t.type === 'credit_expense';
+        });
     }
 
     return transactions.filter(t => {
       const date = new Date(t.date);
       const inPeriod = isWithinInterval(date, { start: startDate, end: endDate });
-      const matchesType = viewType === 'all' || t.type === viewType;
-      return inPeriod && matchesType;
+      if (!inPeriod) return false;
+      
+      if (viewType === 'all') return true;
+      if (viewType === 'income') return t.type === 'income';
+      return t.type === 'expense' || t.type === 'credit_expense';
     });
   }, [transactions, period, viewType]);
 
@@ -96,11 +102,20 @@ export function StatsScreen() {
     const income = filteredTransactions
       .filter(t => t.type === 'income')
       .reduce((sum, t) => sum + t.amount, 0);
-    const expense = filteredTransactions
+    // Real expenses (cash/debit)
+    const realExpense = filteredTransactions
       .filter(t => t.type === 'expense')
       .reduce((sum, t) => sum + t.amount, 0);
-    return { income, expense, balance: income - expense };
+    // Credit expenses (debt)
+    const creditExpense = filteredTransactions
+      .filter(t => t.type === 'credit_expense')
+      .reduce((sum, t) => sum + t.amount, 0);
+    const totalExpense = realExpense + creditExpense;
+    return { income, realExpense, creditExpense, totalExpense, balance: income - realExpense };
   }, [filteredTransactions]);
+
+  const totalDebt = getTotalCreditDebt();
+  const creditCardsWithDebt = getCreditCardsWithDebt();
 
   const pieData = categoryStats.map(stat => ({
     name: stat.category.emoji,
@@ -110,7 +125,8 @@ export function StatsScreen() {
 
   const barData = [
     { name: 'Ingresos', value: totals.income, fill: 'hsl(145, 65%, 42%)' },
-    { name: 'Gastos', value: totals.expense, fill: 'hsl(0, 75%, 55%)' },
+    { name: 'Gastos', value: totals.realExpense, fill: 'hsl(0, 75%, 55%)' },
+    { name: 'Crédito', value: totals.creditExpense, fill: 'hsl(30, 90%, 55%)' },
   ];
 
   const chartConfig = {
@@ -161,7 +177,7 @@ export function StatsScreen() {
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           <Card className="p-3 text-center gradient-success text-success-foreground">
             <p className="text-xs opacity-80">Ingresos</p>
             <p className="font-bold text-lg">
@@ -169,9 +185,18 @@ export function StatsScreen() {
             </p>
           </Card>
           <Card className="p-3 text-center gradient-danger text-destructive-foreground">
-            <p className="text-xs opacity-80">Gastos</p>
+            <p className="text-xs opacity-80">Gastos (Efectivo)</p>
             <p className="font-bold text-lg">
-              ${totals.expense.toLocaleString('es-MX', { maximumFractionDigits: 0 })}
+              ${totals.realExpense.toLocaleString('es-MX', { maximumFractionDigits: 0 })}
+            </p>
+          </Card>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-3">
+          <Card className="p-3 text-center bg-orange-500 text-white">
+            <p className="text-xs opacity-80">Gastos (Crédito)</p>
+            <p className="font-bold text-lg">
+              ${totals.creditExpense.toLocaleString('es-MX', { maximumFractionDigits: 0 })}
             </p>
           </Card>
           <Card className={cn(
@@ -179,12 +204,40 @@ export function StatsScreen() {
             totals.balance >= 0 ? "gradient-secondary" : "gradient-danger",
             "text-primary-foreground"
           )}>
-            <p className="text-xs opacity-80">Balance</p>
+            <p className="text-xs opacity-80">Balance Real</p>
             <p className="font-bold text-lg">
               ${totals.balance.toLocaleString('es-MX', { maximumFractionDigits: 0 })}
             </p>
           </Card>
         </div>
+
+        {/* Credit Card Debt Summary */}
+        {totalDebt > 0 && (
+          <Card className="p-4 shadow-lg border-orange-500/30">
+            <h3 className="font-semibold mb-3 flex items-center gap-2">
+              💳 Deuda por Tarjeta
+            </h3>
+            <div className="space-y-2">
+              {creditCardsWithDebt.filter(c => c.debt > 0).map((card) => (
+                <div key={card.id} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">{card.colorEmoji}</span>
+                    <span className="text-sm">{card.name}</span>
+                  </div>
+                  <span className="font-bold text-orange-500">
+                    ${card.debt.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+              ))}
+              <div className="border-t pt-2 mt-2 flex justify-between font-semibold">
+                <span>Total Deuda</span>
+                <span className="text-orange-500">
+                  ${totalDebt.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                </span>
+              </div>
+            </div>
+          </Card>
+        )}
 
         {filteredTransactions.length === 0 ? (
           <div className="text-center py-12">
