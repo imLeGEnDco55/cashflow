@@ -19,9 +19,8 @@ describe('useFinanceData', () => {
       result.current.addTransaction({
         amount: 100,
         type: 'expense',
-        category: 'test',
+        categoryId: 'test',
         date: '2023-01-01',
-        description: 'Unmount Test',
         paymentMethod: 'cash',
       });
     });
@@ -47,9 +46,8 @@ describe('useFinanceData', () => {
       result.current.addTransaction({
         amount: 50,
         type: 'income',
-        category: 'salary',
+        categoryId: 'salary',
         date: '2023-01-02',
-        description: 'Debounce Test',
         paymentMethod: 'cash',
       });
     });

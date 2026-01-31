@@ -17,9 +17,8 @@ describe('useFinanceData Performance Benchmark', () => {
       id: `t-${i}`,
       amount: 100,
       type: 'expense',
-      category: 'food',
+      categoryId: 'food',
       date: '2023-01-01',
-      description: `Transaction ${i}`,
       paymentMethod: 'cash',
       createdAt: Date.now(),
     }));
@@ -47,9 +46,8 @@ describe('useFinanceData Performance Benchmark', () => {
             result.current.addTransaction({
                 amount: 50,
                 type: 'income',
-                category: 'salary',
+                categoryId: 'salary',
                 date: '2023-01-02',
-                description: `New Transaction ${i}`,
                 paymentMethod: 'cash',
             });
         });
