@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { useFinance } from '@/contexts/FinanceContext';
 import { cn } from '@/lib/utils';
+import { toast } from '@/components/ui/sonner';
 import { TransactionType } from '@/types/finance';
 import {
   Dialog,
@@ -72,6 +73,7 @@ export function CalculatorScreen() {
     setAmount('');
     setSelectedCategory(null);
     setShowCardSelector(false);
+    toast.success("Transacción agregada");
   };
 
   const handlePayCard = (cardId: string) => {
@@ -88,6 +90,7 @@ export function CalculatorScreen() {
 
     setAmount('');
     setShowPayCardSelector(false);
+    toast.success("Pago de tarjeta registrado");
   };
 
   const canSubmit = amount && selectedCategory && parseFloat(amount) > 0;
@@ -126,6 +129,7 @@ export function CalculatorScreen() {
             value={amount}
             onChange={(e) => handleAmountChange(e.target.value)}
             placeholder="0.00"
+            aria-label="Monto"
             className="text-3xl font-bold h-14 border-none shadow-none focus-visible:ring-0 bg-transparent"
           />
         </div>
@@ -172,6 +176,7 @@ export function CalculatorScreen() {
                   : "bg-muted hover:bg-muted/80"
               )}
               title={category.description}
+              aria-label={category.description}
             >
               {category.emoji}
             </button>
