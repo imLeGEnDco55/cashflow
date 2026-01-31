@@ -1,11 +1,11 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { CalculatorScreen } from './CalculatorScreen';
 import { FinanceProvider } from '@/contexts/FinanceContext';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/sonner';
 import { vi, describe, it, expect } from 'vitest';
 
-// Mock sonner
-vi.mock('sonner', () => ({
+// Mock sonner wrapper
+vi.mock('@/components/ui/sonner', () => ({
   toast: {
     success: vi.fn(),
   },
