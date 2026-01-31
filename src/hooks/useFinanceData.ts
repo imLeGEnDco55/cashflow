@@ -158,8 +158,8 @@ export function useFinanceData() {
   // Get total credit debt across all cards
   const totalCreditDebt = useMemo(() => {
     const creditCards = data.cards.filter(c => c.type === 'credit');
-    return creditCards.reduce((total, card) => total + Math.max(0, getCardDebt(card.id)), 0);
-  }, [data.cards, getCardDebt]);
+    return creditCards.reduce((total, card) => total + Math.max(0, cardDebts[card.id] || 0), 0);
+  }, [data.cards, cardDebts]);
 
   // Get all credit cards with their current debt
   const creditCardsWithDebt = useMemo(() => {
