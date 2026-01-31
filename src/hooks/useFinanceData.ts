@@ -204,7 +204,7 @@ export function useFinanceData() {
     reader.readAsText(file);
   }, []);
 
-  return {
+  return useMemo(() => ({
     ...data,
     addTransaction,
     deleteTransaction,
@@ -222,5 +222,23 @@ export function useFinanceData() {
     getCardById,
     exportData,
     importData,
-  };
+  }), [
+    data,
+    addTransaction,
+    deleteTransaction,
+    addCategory,
+    updateCategory,
+    deleteCategory,
+    addCard,
+    updateCard,
+    deleteCard,
+    balance,
+    getCardDebt,
+    totalCreditDebt,
+    creditCardsWithDebt,
+    getCategoryById,
+    getCardById,
+    exportData,
+    importData,
+  ]);
 }
