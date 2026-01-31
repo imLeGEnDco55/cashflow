@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { FinanceData, Transaction, Category, Card, DEFAULT_CATEGORIES, DEFAULT_CARDS } from '@/types/finance';
 
 const STORAGE_KEY = 'emoji-finance-data';
@@ -21,9 +21,29 @@ const getInitialData = (): FinanceData => {
 
 export function useFinanceData() {
   const [data, setData] = useState<FinanceData>(getInitialData);
+  const dataRef = useRef(data);
 
+  // Keep ref in sync with state
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    dataRef.current = data;
+  }, [data]);
+
+  // Save on unmount to prevent data loss
+  useEffect(() => {
+    return () => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(dataRef.current));
+    };
+  }, []);
+
+  // Debounced save for active usage
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }, 1000);
+
+    return () => {
+      clearTimeout(handler);
+    };
   }, [data]);
 
   const addTransaction = useCallback((transaction: Omit<Transaction, 'id' | 'createdAt'>) => {
