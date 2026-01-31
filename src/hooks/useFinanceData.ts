@@ -136,20 +136,24 @@ export function useFinanceData() {
     }, 0);
   }, [data.transactions]);
 
+  // Calculate debts for all cards in a single pass
+  const debtsByCard = useMemo(() => {
+    const debts: Record<string, number> = {};
+    data.transactions.forEach(t => {
+      if (t.type === 'credit_expense' && t.paymentMethod) {
+        debts[t.paymentMethod] = (debts[t.paymentMethod] || 0) + t.amount;
+      }
+      if (t.type === 'credit_payment' && t.targetCardId) {
+        debts[t.targetCardId] = (debts[t.targetCardId] || 0) - t.amount;
+      }
+    });
+    return debts;
+  }, [data.transactions]);
+
   // Get debt for a specific credit card
   const getCardDebt = useCallback((cardId: string) => {
-    return data.transactions.reduce((acc, t) => {
-      // Credit expense on this card adds to debt
-      if (t.type === 'credit_expense' && t.paymentMethod === cardId) {
-        return acc + t.amount;
-      }
-      // Credit payment to this card reduces debt
-      if (t.type === 'credit_payment' && t.targetCardId === cardId) {
-        return acc - t.amount;
-      }
-      return acc;
-    }, 0);
-  }, [data.transactions]);
+    return debtsByCard[cardId] || 0;
+  }, [debtsByCard]);
 
   // Get total credit debt across all cards
   const totalCreditDebt = useMemo(() => {
