@@ -1,8 +1,18 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import { Virtuoso } from 'react-virtuoso';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useFinance } from '@/contexts/FinanceContext';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -140,6 +150,7 @@ const TransactionItem = memo(({
         size="icon"
         onClick={() => onDelete(transaction.id)}
         className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+        aria-label="Eliminar transacción"
       >
         <Trash2 className="w-4 h-4" />
       </Button>
@@ -158,6 +169,8 @@ export function HistoryScreen() {
     totalCreditDebt: totalDebt,
     deleteTransaction 
   } = useFinance();
+
+  const [transactionToDelete, setTransactionToDelete] = useState<string | null>(null);
 
   const categoryMap = useMemo(() => new Map(categories.map(c => [c.id, c])), [categories]);
   const cardMap = useMemo(() => new Map(cards.map(c => [c.id, c])), [cards]);
@@ -308,8 +321,9 @@ export function HistoryScreen() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => deleteTransaction(transaction.id)}
+                      onClick={() => setTransactionToDelete(transaction.id)}
                       className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                      aria-label="Eliminar transacción"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -320,6 +334,31 @@ export function HistoryScreen() {
           </div>
         )}
       </div>
+
+      <AlertDialog open={!!transactionToDelete} onOpenChange={(open) => !open && setTransactionToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar transacción?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. La transacción será eliminada permanentemente de tu historial.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (transactionToDelete) {
+                  deleteTransaction(transactionToDelete);
+                  setTransactionToDelete(null);
+                }
+              }}
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
