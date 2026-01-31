@@ -268,7 +268,7 @@ export function HistoryScreen() {
               const badge = getTransactionBadge(transaction);
 
               return (
-                <div className="pb-3">
+                <div key={transaction.id} className="pb-3">
                   <Card
                     className={cn(
                       "p-4 flex items-center gap-4 animate-slide-up shadow-md hover:shadow-lg transition-shadow",
@@ -316,8 +316,8 @@ export function HistoryScreen() {
                   </Card>
                 </div>
               );
-            }}
-          />
+            })}
+          </div>
         )}
       </div>
     </div>
