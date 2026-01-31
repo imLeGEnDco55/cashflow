@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { FinanceData, Transaction, Category, Card, DEFAULT_CATEGORIES, DEFAULT_CARDS } from '@/types/finance';
 
 const STORAGE_KEY = 'emoji-finance-data';
@@ -21,9 +21,29 @@ const getInitialData = (): FinanceData => {
 
 export function useFinanceData() {
   const [data, setData] = useState<FinanceData>(getInitialData);
+  const dataRef = useRef(data);
 
+  // Keep ref in sync with state
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    dataRef.current = data;
+  }, [data]);
+
+  // Save on unmount to prevent data loss
+  useEffect(() => {
+    return () => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(dataRef.current));
+    };
+  }, []);
+
+  // Debounced save for active usage
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }, 1000);
+
+    return () => {
+      clearTimeout(handler);
+    };
   }, [data]);
 
   const addTransaction = useCallback((transaction: Omit<Transaction, 'id' | 'createdAt'>) => {
@@ -116,23 +136,24 @@ export function useFinanceData() {
     }, 0);
   }, [data.transactions]);
 
-  // Pre-calculate debt for all cards in one pass
-  const cardDebts = useMemo(() => {
+  // Calculate debts for all cards in a single pass
+  const debtsByCard = useMemo(() => {
     const debts: Record<string, number> = {};
-    for (const t of data.transactions) {
-      if (t.type === 'credit_expense') {
+    data.transactions.forEach(t => {
+      if (t.type === 'credit_expense' && t.paymentMethod) {
         debts[t.paymentMethod] = (debts[t.paymentMethod] || 0) + t.amount;
-      } else if (t.type === 'credit_payment' && t.targetCardId) {
+      }
+      if (t.type === 'credit_payment' && t.targetCardId) {
         debts[t.targetCardId] = (debts[t.targetCardId] || 0) - t.amount;
       }
-    }
+    });
     return debts;
   }, [data.transactions]);
 
   // Get debt for a specific credit card
   const getCardDebt = useCallback((cardId: string) => {
-    return cardDebts[cardId] || 0;
-  }, [cardDebts]);
+    return debtsByCard[cardId] || 0;
+  }, [debtsByCard]);
 
   // Get total credit debt across all cards
   const totalCreditDebt = useMemo(() => {
@@ -183,7 +204,7 @@ export function useFinanceData() {
     reader.readAsText(file);
   }, []);
 
-  return {
+  return useMemo(() => ({
     ...data,
     addTransaction,
     deleteTransaction,
@@ -201,5 +222,23 @@ export function useFinanceData() {
     getCardById,
     exportData,
     importData,
-  };
+  }), [
+    data,
+    addTransaction,
+    deleteTransaction,
+    addCategory,
+    updateCategory,
+    deleteCategory,
+    addCard,
+    updateCard,
+    deleteCard,
+    balance,
+    getCardDebt,
+    totalCreditDebt,
+    creditCardsWithDebt,
+    getCategoryById,
+    getCardById,
+    exportData,
+    importData,
+  ]);
 }

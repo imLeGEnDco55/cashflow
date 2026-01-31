@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Plus, Minus, Banknote, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,7 +32,10 @@ export function CalculatorScreen() {
   const [showPayCardSelector, setShowPayCardSelector] = useState(false);
 
   // Filter out the credit payment category from normal selection (it's used automatically)
-  const displayCategories = categories.filter(c => c.id !== 'credit-payment');
+  const displayCategories = useMemo(() => categories.filter(c => c.id !== 'credit-payment'), [categories]);
+
+  const cardsToPay = useMemo(() => creditCardsWithDebt.filter(c => c.debt > 0), [creditCardsWithDebt]);
+  const hasDebt = useMemo(() => creditCardsWithDebt.some(c => c.debt > 0), [creditCardsWithDebt]);
 
   const handleAmountChange = (value: string) => {
     const sanitized = value.replace(/[^0-9.]/g, '');
@@ -206,7 +209,7 @@ export function CalculatorScreen() {
       </div>
 
       {/* Pay Credit Card Button */}
-      {creditCardsWithDebt.some(c => c.debt > 0) && (
+      {hasDebt && (
         <div className="mx-4 mb-4">
           <Button
             onClick={() => setShowPayCardSelector(true)}
@@ -259,7 +262,7 @@ export function CalculatorScreen() {
             <DialogTitle className="text-center">¿Cuál tarjeta pagarás?</DialogTitle>
           </DialogHeader>
           <div className="grid gap-3 py-4">
-            {creditCardsWithDebt.filter(c => c.debt > 0).map((card) => (
+            {cardsToPay.map((card) => (
               <Button
                 key={card.id}
                 variant="outline"
