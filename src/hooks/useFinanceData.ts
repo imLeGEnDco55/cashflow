@@ -116,26 +116,29 @@ export function useFinanceData() {
     }, 0);
   }, [data.transactions]);
 
+  // Pre-calculate debt for all cards in one pass
+  const cardDebts = useMemo(() => {
+    const debts: Record<string, number> = {};
+    for (const t of data.transactions) {
+      if (t.type === 'credit_expense') {
+        debts[t.paymentMethod] = (debts[t.paymentMethod] || 0) + t.amount;
+      } else if (t.type === 'credit_payment' && t.targetCardId) {
+        debts[t.targetCardId] = (debts[t.targetCardId] || 0) - t.amount;
+      }
+    }
+    return debts;
+  }, [data.transactions]);
+
   // Get debt for a specific credit card
   const getCardDebt = useCallback((cardId: string) => {
-    return data.transactions.reduce((acc, t) => {
-      // Credit expense on this card adds to debt
-      if (t.type === 'credit_expense' && t.paymentMethod === cardId) {
-        return acc + t.amount;
-      }
-      // Credit payment to this card reduces debt
-      if (t.type === 'credit_payment' && t.targetCardId === cardId) {
-        return acc - t.amount;
-      }
-      return acc;
-    }, 0);
-  }, [data.transactions]);
+    return cardDebts[cardId] || 0;
+  }, [cardDebts]);
 
   // Get total credit debt across all cards
   const totalCreditDebt = useMemo(() => {
     const creditCards = data.cards.filter(c => c.type === 'credit');
-    return creditCards.reduce((total, card) => total + Math.max(0, getCardDebt(card.id)), 0);
-  }, [data.cards, getCardDebt]);
+    return creditCards.reduce((total, card) => total + Math.max(0, cardDebts[card.id] || 0), 0);
+  }, [data.cards, cardDebts]);
 
   // Get all credit cards with their current debt
   const creditCardsWithDebt = useMemo(() => {
