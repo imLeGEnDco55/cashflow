@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -9,13 +10,16 @@ import { Transaction } from '@/types/finance';
 
 export function HistoryScreen() {
   const { 
-    transactions, 
+    transactions,
+    categories,
+    cards,
     balance,
     totalCreditDebt: totalDebt,
-    getCategoryById, 
-    getCardById, 
     deleteTransaction 
   } = useFinance();
+
+  const categoryMap = useMemo(() => new Map(categories.map(c => [c.id, c])), [categories]);
+  const cardMap = useMemo(() => new Map(cards.map(c => [c.id, c])), [cards]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -24,7 +28,7 @@ export function HistoryScreen() {
 
   const getPaymentMethodDisplay = (transaction: Transaction) => {
     if (transaction.type === 'credit_payment') {
-      const targetCard = getCardById(transaction.targetCardId || '');
+      const targetCard = cardMap.get(transaction.targetCardId || '');
       return { 
         emoji: targetCard?.colorEmoji || '💳', 
         label: `Pago a ${targetCard?.name || 'Tarjeta'}` 
@@ -33,7 +37,7 @@ export function HistoryScreen() {
     if (transaction.paymentMethod === 'cash') {
       return { emoji: '💵', label: 'Efectivo' };
     }
-    const card = getCardById(transaction.paymentMethod);
+    const card = cardMap.get(transaction.paymentMethod);
     return { emoji: card?.colorEmoji || '💳', label: card?.name || 'Tarjeta' };
   };
 
@@ -118,7 +122,7 @@ export function HistoryScreen() {
         ) : (
           <div className="space-y-3">
             {transactions.map((transaction, index) => {
-              const category = getCategoryById(transaction.categoryId);
+              const category = categoryMap.get(transaction.categoryId);
               const paymentMethod = getPaymentMethodDisplay(transaction);
               const badge = getTransactionBadge(transaction);
 
