@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { FinanceData, Transaction, Category, Card, DEFAULT_CATEGORIES, DEFAULT_CARDS } from '@/types/finance';
 
 const STORAGE_KEY = 'emoji-finance-data';
@@ -100,7 +100,7 @@ export function useFinanceData() {
   // - expense (cash/debit)
   // - credit_payment (when you pay off credit card, money leaves your account)
   // credit_expense does NOT affect balance (it's debt, not real money movement)
-  const getBalance = useCallback(() => {
+  const balance = useMemo(() => {
     return data.transactions.reduce((acc, t) => {
       switch (t.type) {
         case 'income':
@@ -132,13 +132,13 @@ export function useFinanceData() {
   }, [data.transactions]);
 
   // Get total credit debt across all cards
-  const getTotalCreditDebt = useCallback(() => {
+  const totalCreditDebt = useMemo(() => {
     const creditCards = data.cards.filter(c => c.type === 'credit');
     return creditCards.reduce((total, card) => total + Math.max(0, getCardDebt(card.id)), 0);
   }, [data.cards, getCardDebt]);
 
   // Get all credit cards with their current debt
-  const getCreditCardsWithDebt = useCallback(() => {
+  const creditCardsWithDebt = useMemo(() => {
     return data.cards
       .filter(c => c.type === 'credit')
       .map(card => ({
@@ -190,10 +190,10 @@ export function useFinanceData() {
     addCard,
     updateCard,
     deleteCard,
-    getBalance,
+    balance,
     getCardDebt,
-    getTotalCreditDebt,
-    getCreditCardsWithDebt,
+    totalCreditDebt,
+    creditCardsWithDebt,
     getCategoryById,
     getCardById,
     exportData,

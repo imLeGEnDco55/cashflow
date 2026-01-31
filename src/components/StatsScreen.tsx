@@ -34,7 +34,7 @@ const COLORS = [
 ];
 
 export function StatsScreen() {
-  const { transactions, categories, getCategoryById, getTotalCreditDebt, getCreditCardsWithDebt } = useFinance();
+  const { transactions, categories, getCategoryById, totalCreditDebt: totalDebt, creditCardsWithDebt } = useFinance();
   const [period, setPeriod] = useState<Period>('month');
   const [viewType, setViewType] = useState<ViewType>('all');
 
@@ -113,9 +113,6 @@ export function StatsScreen() {
     const totalExpense = realExpense + creditExpense;
     return { income, realExpense, creditExpense, totalExpense, balance: income - realExpense };
   }, [filteredTransactions]);
-
-  const totalDebt = getTotalCreditDebt();
-  const creditCardsWithDebt = getCreditCardsWithDebt();
 
   const pieData = categoryStats.map(stat => ({
     name: stat.category.emoji,
