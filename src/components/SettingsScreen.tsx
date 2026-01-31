@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Plus, Trash2, Edit2, CreditCard, Download, Upload, Check, X } from 'lucide-react';
+import { Plus, Trash2, Edit2, Download, Upload, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { useFinance } from '@/contexts/FinanceContext';
+import { CARD_COLORS } from '@/types/finance';
 import {
   Dialog,
   DialogContent,
@@ -38,6 +39,7 @@ export function SettingsScreen() {
   const [newDescription, setNewDescription] = useState('');
   const [newCardName, setNewCardName] = useState('');
   const [newCardType, setNewCardType] = useState<'credit' | 'debit'>('debit');
+  const [newCardColor, setNewCardColor] = useState('🟦');
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
   const [editingCard, setEditingCard] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
@@ -54,9 +56,10 @@ export function SettingsScreen() {
 
   const handleAddCard = () => {
     if (!newCardName) return;
-    addCard({ name: newCardName, type: newCardType });
+    addCard({ name: newCardName, type: newCardType, colorEmoji: newCardColor });
     setNewCardName('');
     setNewCardType('debit');
+    setNewCardColor('🟦');
     setShowAddCard(false);
   };
 
@@ -207,6 +210,25 @@ export function SettingsScreen() {
                     />
                   </div>
                   <div>
+                    <label className="text-sm text-muted-foreground">Color</label>
+                    <div className="flex gap-2 flex-wrap mt-2">
+                      {CARD_COLORS.map((color) => (
+                        <button
+                          key={color}
+                          onClick={() => setNewCardColor(color)}
+                          className={cn(
+                            "text-3xl p-2 rounded-lg transition-all",
+                            newCardColor === color
+                              ? "bg-primary/20 ring-2 ring-primary scale-110"
+                              : "bg-muted hover:bg-muted/80"
+                          )}
+                        >
+                          {color}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
                     <label className="text-sm text-muted-foreground">Tipo</label>
                     <Select value={newCardType} onValueChange={(v) => setNewCardType(v as 'credit' | 'debit')}>
                       <SelectTrigger>
@@ -237,7 +259,7 @@ export function SettingsScreen() {
                   key={card.id}
                   className="flex items-center gap-3 p-3 rounded-lg bg-muted/50"
                 >
-                  <CreditCard className="w-5 h-5 text-primary" />
+                  <span className="text-2xl">{card.colorEmoji}</span>
                   {editingCard === card.id ? (
                     <>
                       <Input

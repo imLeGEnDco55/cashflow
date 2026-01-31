@@ -8,7 +8,10 @@ export interface Card {
   id: string;
   name: string;
   type: 'credit' | 'debit';
+  colorEmoji: string;
 }
+
+export const CARD_COLORS = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪', '🟫', '⬛', '⬜'] as const;
 
 export interface Transaction {
   id: string;
