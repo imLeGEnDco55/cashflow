@@ -212,29 +212,47 @@ export function StatsScreen() {
         </div>
 
         {/* Credit Card Debt Summary */}
-        {totalDebt > 0 && (
+        {/* Credit Card Debt Summary */}
+        {creditCardsWithDebt.length > 0 && (
           <Card className="p-4 shadow-lg border-orange-500/30">
             <h3 className="font-semibold mb-3 flex items-center gap-2">
-              💳 Deuda por Tarjeta
+              💳 Tarjetas de Crédito
             </h3>
-            <div className="space-y-2">
-              {creditCardsWithDebt.filter(c => c.debt > 0).map((card) => (
-                <div key={card.id} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">{card.colorEmoji}</span>
-                    <span className="text-sm">{card.name}</span>
+            <div className="space-y-3">
+              {creditCardsWithDebt.map((card) => (
+                <div key={card.id} className="p-3 rounded-lg bg-muted/50">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">{card.colorEmoji}</span>
+                      <span className="font-medium">{card.name}</span>
+                    </div>
+                    <span className={cn(
+                      "font-bold",
+                      card.debt > 0 ? "text-orange-500" : "text-success"
+                    )}>
+                      ${card.debt.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                    </span>
                   </div>
-                  <span className="font-bold text-orange-500">
-                    ${card.debt.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-                  </span>
+                  {card.cutOffDay && card.paymentDay && (
+                    <div className="flex gap-4 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        ✂️ Corte: día {card.cutOffDay}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        📅 Pago: día {card.paymentDay}
+                      </span>
+                    </div>
+                  )}
                 </div>
               ))}
-              <div className="border-t pt-2 mt-2 flex justify-between font-semibold">
-                <span>Total Deuda</span>
-                <span className="text-orange-500">
-                  ${totalDebt.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-                </span>
-              </div>
+              {totalDebt > 0 && (
+                <div className="border-t pt-3 mt-2 flex justify-between font-semibold">
+                  <span>Total Deuda</span>
+                  <span className="text-orange-500">
+                    ${totalDebt.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+              )}
             </div>
           </Card>
         )}
