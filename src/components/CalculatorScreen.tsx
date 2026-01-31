@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Plus, Minus, Banknote, CreditCard, X } from 'lucide-react';
+import { Plus, Minus, Banknote, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { useFinance } from '@/contexts/FinanceContext';
 import { cn } from '@/lib/utils';
+import { TransactionType } from '@/types/finance';
 import {
   Dialog,
   DialogContent,
@@ -13,16 +14,30 @@ import {
 } from '@/components/ui/dialog';
 
 export function CalculatorScreen() {
-  const { categories, cards, addTransaction, getBalance } = useFinance();
+  const { 
+    categories, 
+    cards, 
+    addTransaction, 
+    getBalance, 
+    getTotalCreditDebt,
+    getCreditCardsWithDebt,
+    getCardById,
+  } = useFinance();
+  
   const [amount, setAmount] = useState('');
   const [type, setType] = useState<'income' | 'expense'>('expense');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showCardSelector, setShowCardSelector] = useState(false);
+  const [showPayCardSelector, setShowPayCardSelector] = useState(false);
 
   const balance = getBalance();
+  const totalDebt = getTotalCreditDebt();
+  const creditCardsWithDebt = getCreditCardsWithDebt();
+
+  // Filter out the credit payment category from normal selection (it's used automatically)
+  const displayCategories = categories.filter(c => c.id !== 'credit-payment');
 
   const handleAmountChange = (value: string) => {
-    // Only allow numbers and one decimal point
     const sanitized = value.replace(/[^0-9.]/g, '');
     const parts = sanitized.split('.');
     if (parts.length > 2) return;
@@ -33,9 +48,21 @@ export function CalculatorScreen() {
   const handleSubmit = (paymentMethod: 'cash' | string) => {
     if (!amount || !selectedCategory || parseFloat(amount) <= 0) return;
 
+    const card = paymentMethod !== 'cash' ? getCardById(paymentMethod) : null;
+    
+    // Determine transaction type based on payment method
+    let transactionType: TransactionType;
+    if (type === 'income') {
+      transactionType = 'income';
+    } else if (card?.type === 'credit') {
+      transactionType = 'credit_expense'; // Credit card purchase = debt, not expense
+    } else {
+      transactionType = 'expense'; // Cash or debit = real expense
+    }
+
     addTransaction({
       amount: parseFloat(amount),
-      type,
+      type: transactionType,
       categoryId: selectedCategory,
       paymentMethod,
       date: new Date().toISOString(),
@@ -47,19 +74,46 @@ export function CalculatorScreen() {
     setShowCardSelector(false);
   };
 
+  const handlePayCard = (cardId: string) => {
+    if (!amount || parseFloat(amount) <= 0) return;
+
+    addTransaction({
+      amount: parseFloat(amount),
+      type: 'credit_payment',
+      categoryId: 'credit-payment',
+      paymentMethod: 'cash', // Payment comes from your real money
+      targetCardId: cardId,
+      date: new Date().toISOString(),
+    });
+
+    setAmount('');
+    setShowPayCardSelector(false);
+  };
+
   const canSubmit = amount && selectedCategory && parseFloat(amount) > 0;
+  const canPayCard = amount && parseFloat(amount) > 0;
 
   return (
     <div className="flex flex-col h-full pb-20">
       {/* Balance Header */}
-      <div className="text-center py-6">
-        <p className="text-sm text-muted-foreground mb-1">Balance Actual</p>
+      <div className="text-center py-4">
+        <p className="text-sm text-muted-foreground mb-1">Balance Disponible</p>
         <h1 className={cn(
           "text-4xl font-bold transition-colors",
           balance >= 0 ? "text-success" : "text-destructive"
         )}>
           ${balance.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
         </h1>
+        
+        {/* Credit Debt Display */}
+        {totalDebt > 0 && (
+          <div className="mt-2 flex items-center justify-center gap-2">
+            <span className="text-sm text-muted-foreground">Deuda en tarjetas:</span>
+            <span className="text-sm font-semibold text-destructive">
+              ${totalDebt.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Amount Input */}
@@ -107,7 +161,7 @@ export function CalculatorScreen() {
       <Card className="mx-4 p-4 mb-4 shadow-lg flex-1 overflow-auto">
         <p className="text-sm text-muted-foreground mb-3">Selecciona una categoría</p>
         <div className="grid grid-cols-4 gap-3">
-          {categories.map((category) => (
+          {displayCategories.map((category) => (
             <button
               key={category.id}
               onClick={() => setSelectedCategory(category.id)}
@@ -131,7 +185,7 @@ export function CalculatorScreen() {
       </Card>
 
       {/* Payment Method Buttons */}
-      <div className="flex gap-3 mx-4 mb-4">
+      <div className="flex gap-3 mx-4 mb-2">
         <Button
           onClick={() => handleSubmit('cash')}
           disabled={!canSubmit}
@@ -150,8 +204,22 @@ export function CalculatorScreen() {
         </Button>
       </div>
 
+      {/* Pay Credit Card Button */}
+      {creditCardsWithDebt.some(c => c.debt > 0) && (
+        <div className="mx-4 mb-4">
+          <Button
+            onClick={() => setShowPayCardSelector(true)}
+            disabled={!canPayCard}
+            variant="outline"
+            className="w-full h-12 text-base font-medium border-primary/50 hover:bg-primary/10"
+          >
+            💰 Pagar Tarjeta de Crédito
+          </Button>
+        </div>
+      )}
+
       {cards.length === 0 && (
-        <p className="text-center text-xs text-muted-foreground mx-4">
+        <p className="text-center text-xs text-muted-foreground mx-4 mb-4">
           Ve a Ajustes para agregar tus tarjetas
         </p>
       )}
@@ -168,13 +236,46 @@ export function CalculatorScreen() {
                 key={card.id}
                 variant="outline"
                 onClick={() => handleSubmit(card.id)}
-                className="h-14 justify-start text-left"
+                className="h-16 justify-start text-left"
               >
                 <span className="text-2xl mr-3">{card.colorEmoji}</span>
-                <div>
+                <div className="flex-1">
                   <p className="font-semibold">{card.name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {card.type === 'credit' ? 'Crédito' : 'Débito'}
+                    {card.type === 'credit' ? '🔴 Crédito (se suma a deuda)' : '🟢 Débito'}
+                  </p>
+                </div>
+              </Button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Pay Card Selector Dialog */}
+      <Dialog open={showPayCardSelector} onOpenChange={setShowPayCardSelector}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-center">¿Cuál tarjeta pagarás?</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-3 py-4">
+            {creditCardsWithDebt.filter(c => c.debt > 0).map((card) => (
+              <Button
+                key={card.id}
+                variant="outline"
+                onClick={() => handlePayCard(card.id)}
+                className="h-16 justify-between text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">{card.colorEmoji}</span>
+                  <div>
+                    <p className="font-semibold">{card.name}</p>
+                    <p className="text-xs text-muted-foreground">Crédito</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-muted-foreground">Deuda</p>
+                  <p className="font-bold text-destructive">
+                    ${card.debt.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                   </p>
                 </div>
               </Button>

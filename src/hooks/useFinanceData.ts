@@ -95,11 +95,57 @@ export function useFinanceData() {
     }));
   }, []);
 
+  // Balance calculation:
+  // + income
+  // - expense (cash/debit)
+  // - credit_payment (when you pay off credit card, money leaves your account)
+  // credit_expense does NOT affect balance (it's debt, not real money movement)
   const getBalance = useCallback(() => {
     return data.transactions.reduce((acc, t) => {
-      return t.type === 'income' ? acc + t.amount : acc - t.amount;
+      switch (t.type) {
+        case 'income':
+          return acc + t.amount;
+        case 'expense':
+        case 'credit_payment':
+          return acc - t.amount;
+        case 'credit_expense':
+          return acc; // No balance change for credit purchases
+        default:
+          return acc;
+      }
     }, 0);
   }, [data.transactions]);
+
+  // Get debt for a specific credit card
+  const getCardDebt = useCallback((cardId: string) => {
+    return data.transactions.reduce((acc, t) => {
+      // Credit expense on this card adds to debt
+      if (t.type === 'credit_expense' && t.paymentMethod === cardId) {
+        return acc + t.amount;
+      }
+      // Credit payment to this card reduces debt
+      if (t.type === 'credit_payment' && t.targetCardId === cardId) {
+        return acc - t.amount;
+      }
+      return acc;
+    }, 0);
+  }, [data.transactions]);
+
+  // Get total credit debt across all cards
+  const getTotalCreditDebt = useCallback(() => {
+    const creditCards = data.cards.filter(c => c.type === 'credit');
+    return creditCards.reduce((total, card) => total + Math.max(0, getCardDebt(card.id)), 0);
+  }, [data.cards, getCardDebt]);
+
+  // Get all credit cards with their current debt
+  const getCreditCardsWithDebt = useCallback(() => {
+    return data.cards
+      .filter(c => c.type === 'credit')
+      .map(card => ({
+        ...card,
+        debt: Math.max(0, getCardDebt(card.id)),
+      }));
+  }, [data.cards, getCardDebt]);
 
   const getCategoryById = useCallback((id: string) => {
     return data.categories.find(c => c.id === id);
@@ -145,6 +191,9 @@ export function useFinanceData() {
     updateCard,
     deleteCard,
     getBalance,
+    getCardDebt,
+    getTotalCreditDebt,
+    getCreditCardsWithDebt,
     getCategoryById,
     getCardById,
     exportData,
