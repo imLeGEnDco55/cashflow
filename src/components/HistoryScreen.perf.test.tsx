@@ -24,6 +24,8 @@ describe('HistoryScreen Performance', () => {
 
     (useFinance as Mock).mockReturnValue({
       transactions,
+      categories: [{ id: '1', emoji: '🍕', description: 'Food' }],
+      cards: [],
       balance: 10000,
       totalCreditDebt: 0,
       getCategoryById: (id: string) => ({ id, emoji: '🍕', description: 'Food' }),

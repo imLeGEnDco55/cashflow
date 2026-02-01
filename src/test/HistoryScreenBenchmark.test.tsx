@@ -25,6 +25,8 @@ const mockCards: Card[] = [];
 vi.mock('@/contexts/FinanceContext', () => ({
   useFinance: () => ({
     transactions: mockTransactions,
+    categories: mockCategories,
+    cards: mockCards,
     balance: 1000,
     totalCreditDebt: 0,
     getCategoryById: (id: string) => mockCategories.find(c => c.id === id),
