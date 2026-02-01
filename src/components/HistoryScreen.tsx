@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Trash2 } from 'lucide-react';
-import { Virtuoso } from 'react-virtuoso';
+
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
@@ -174,8 +174,7 @@ export function HistoryScreen() {
   const categoryMap = useMemo(() => new Map((categories || []).map(c => [c.id, c])), [categories]);
   const cardMap = useMemo(() => new Map((cards || []).map(c => [c.id, c])), [cards]);
 
-  const categoryMap = useMemo(() => new Map((categories || []).map(c => [c.id, c])), [categories]);
-  const cardMap = useMemo(() => new Map((cards || []).map(c => [c.id, c])), [cards]);
+
 
   return (
     <div className="flex flex-col h-full pb-20">
