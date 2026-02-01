@@ -1,3 +1,0 @@
-## 2025-02-27 - Context Value Memoization
-**Learning:** The `useFinanceData` hook was exporting functions (`getBalance`, `getTotalCreditDebt`) that recalculated derived state on every call. Since the hook returned a new object reference on every render, consumers (like `CalculatorScreen`) were re-rendering and triggering these O(N) calculations repeatedly (e.g., on every keystroke).
-**Action:** Always memoize derived state (`balance`, `totalDebt`) inside the hook using `useMemo` and expose the values, not the calculation functions, to context consumers. This ensures O(1) access during render and prevents unnecessary recalculations.

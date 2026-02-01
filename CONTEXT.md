@@ -3,32 +3,39 @@
 ## 📌 Proyecto: CashFlow (Gestor de Finanzas Personales)
 
 **Estado Actual:**
-- Rama: `main` (up to date)
-- Último Merge: PR #14 (Delete Confirmation & Accessibility)
-- **Fix Reciente:** Se corrigió error 404 en GitHub Pages. El problema era que el build no se había deployado correctamente. Se instaló `gh-pages`, se agregó script `deploy` en `package.json`, y se ejecutó `npm run deploy` exitosamente.
-- Build Status: ✅ `npm run build` exitoso.
+- Rama: `main`
+- Build Status: ✅ `npm run build` exitoso
 - Deploy Status: ✅ Publicado en rama `gh-pages`
+- **Última Refactorización:** Limpieza masiva de código sin usar
 
 ## 🛠 Tech Stack
-- **Frontend:** React + TypeScript + Vite
-- **Estilos:** Tailwind CSS + shadcn/ui
+- **Frontend:** React 18 + TypeScript + Vite
+- **Estilos:** Tailwind CSS + shadcn/ui (11 componentes)
 - **Iconos:** Lucide React
 - **Gráficos:** Recharts
-- **Gestor de Paquetes:** npm/bun (bun.lockb presente, pero se usó npm para el fix)
-- **Deploy:** gh-pages (rama `gh-pages`)
+- **Gestor de Paquetes:** npm (solo `package-lock.json`)
+- **Deploy:** gh-pages
 
 ## 📂 Estructura Clave
-- `src/`: Código fuente
-- `dist/`: Build de producción (deployado a GitHub Pages)
-- `d:\Appz\cashflow`: Root
+- `src/components/ui/` - 11 componentes shadcn usados
+- `src/components/` - 4 screens principales
+- `src/hooks/` - useFinanceData + use-toast
+- `src/contexts/` - FinanceContext
 
 ## 📝 Notas de Desarrollo
-- El usuario prefiere abstracción técnica ("QUÉ" vs "CÓMO").
-- MVP constante.
-- Hardware limitado (i5-2500k).
-- **Regla de Oro:** Mantener este archivo actualizado.
+- El usuario prefiere abstracción técnica ("QUÉ" vs "CÓMO")
+- MVP constante
+- Hardware limitado (i5-2500k)
+- **Regla de Oro:** Mantener este archivo actualizado
+
+## 🧹 Última Limpieza (Feb 2026)
+- Eliminados 38 componentes UI sin usar
+- Eliminadas 31 dependencias npm
+- Removidas carpetas `.Jules/` y `.lovable/`
+- Unificados lockfiles (solo npm)
+- Tests: 2 tests preexistentes fallan (debounce timing)
 
 ## 🚀 Next Steps
-1. Verificar que GitHub Pages esté configurado en Settings → Pages → Branch: `gh-pages` / (root)
-2. Probar la app en: `https://imlegendco55.github.io/cashflow/`
-3. Continuar con nuevas features o mejoras visuales según feedback del usuario.
+1. Verificar app en: `https://imlegendco55.github.io/cashflow/`
+2. Ejecutar `npm run deploy` para publicar cambios
+3. Considerar fix de los 2 tests que fallan (opcional)

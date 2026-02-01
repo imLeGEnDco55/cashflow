@@ -1,6 +1,12 @@
 import { useState, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useFinance } from '@/contexts/FinanceContext';
 import { cn } from '@/lib/utils';
 import {
@@ -69,7 +75,7 @@ export function StatsScreen() {
       const date = new Date(t.date);
       const inPeriod = isWithinInterval(date, { start: startDate, end: endDate });
       if (!inPeriod) return false;
-      
+
       if (viewType === 'all') return true;
       if (viewType === 'income') return t.type === 'income';
       return t.type === 'expense' || t.type === 'credit_expense';
@@ -78,11 +84,11 @@ export function StatsScreen() {
 
   const categoryStats = useMemo(() => {
     const stats: Record<string, { total: number; count: number; category: typeof categories[0] }> = {};
-    
+
     filteredTransactions.forEach(t => {
       const category = getCategoryById(t.categoryId);
       if (!category) return;
-      
+
       if (!stats[t.categoryId]) {
         stats[t.categoryId] = { total: 0, count: 0, category };
       }
@@ -133,45 +139,32 @@ export function StatsScreen() {
   return (
     <div className="flex flex-col h-full pb-20 overflow-auto">
       <div className="p-4 space-y-4">
-        {/* Period Filter */}
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          {[
-            { id: 'week' as Period, label: 'Semana' },
-            { id: 'month' as Period, label: 'Mes' },
-            { id: 'year' as Period, label: 'Año' },
-            { id: 'all' as Period, label: 'Todo' },
-          ].map(({ id, label }) => (
-            <Button
-              key={id}
-              variant={period === id ? 'default' : 'outline'}
-              onClick={() => setPeriod(id)}
-              className={cn(
-                "whitespace-nowrap",
-                period === id && "gradient-primary"
-              )}
-            >
-              {label}
-            </Button>
-          ))}
+        {/* Filters Row */}
+        <div className="flex gap-3">
+          <Select value={period} onValueChange={(v) => setPeriod(v as Period)}>
+            <SelectTrigger className="flex-1">
+              <SelectValue placeholder="Período" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="week">📅 Semana</SelectItem>
+              <SelectItem value="month">📆 Mes</SelectItem>
+              <SelectItem value="year">🗓️ Año</SelectItem>
+              <SelectItem value="all">📊 Todo</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={viewType} onValueChange={(v) => setViewType(v as ViewType)}>
+            <SelectTrigger className="flex-1">
+              <SelectValue placeholder="Tipo" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">🔄 Todo</SelectItem>
+              <SelectItem value="income">📈 Ingresos</SelectItem>
+              <SelectItem value="expense">📉 Gastos</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
-        {/* View Type Filter */}
-        <div className="flex gap-2">
-          {[
-            { id: 'all' as ViewType, label: 'Todo' },
-            { id: 'income' as ViewType, label: '📈 Ingresos' },
-            { id: 'expense' as ViewType, label: '📉 Gastos' },
-          ].map(({ id, label }) => (
-            <Button
-              key={id}
-              variant={viewType === id ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewType(id)}
-            >
-              {label}
-            </Button>
-          ))}
-        </div>
 
         {/* Summary Cards */}
         <div className="grid grid-cols-2 gap-3">
@@ -188,7 +181,7 @@ export function StatsScreen() {
             </p>
           </Card>
         </div>
-        
+
         <div className="grid grid-cols-2 gap-3">
           <Card className="p-3 text-center bg-orange-500 text-white">
             <p className="text-xs opacity-80">Gastos (Crédito)</p>
@@ -290,7 +283,7 @@ export function StatsScreen() {
                       cy="50%"
                       outerRadius={80}
                       dataKey="value"
-                      label={({ name, percent }) => 
+                      label={({ name, percent }) =>
                         `${name} ${(percent * 100).toFixed(0)}%`
                       }
                     >
