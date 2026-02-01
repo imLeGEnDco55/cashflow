@@ -172,8 +172,8 @@ export function HistoryScreen() {
 
   const [transactionToDelete, setTransactionToDelete] = useState<string | null>(null);
 
-  const categoryMap = useMemo(() => new Map(categories.map(c => [c.id, c])), [categories]);
-  const cardMap = useMemo(() => new Map(cards.map(c => [c.id, c])), [cards]);
+  const categoryMap = useMemo(() => new Map((categories || []).map(c => [c.id, c])), [categories]);
+  const cardMap = useMemo(() => new Map((cards || []).map(c => [c.id, c])), [cards]);
 
   return (
     <div className="flex flex-col h-full pb-20">
