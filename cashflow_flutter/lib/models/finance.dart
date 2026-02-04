@@ -2,6 +2,7 @@
 /// Translated from TypeScript types/finance.ts
 library;
 
+import 'dart:convert';
 import 'package:uuid/uuid.dart';
 
 const _uuid = Uuid();
@@ -89,6 +90,22 @@ class FinanceCategory {
         isSuperEmoji: json['isSuperEmoji'] as bool? ?? false,
         aliases: json['aliases'] as String?,
       );
+
+  Map<String, dynamic> toMap() => {
+    'id': id,
+    'emoji': emoji,
+    'description': description,
+    'isSuperEmoji': isSuperEmoji ? 1 : 0,
+    'aliases': aliases,
+  };
+
+  factory FinanceCategory.fromMap(Map<String, dynamic> map) => FinanceCategory(
+    id: map['id'] as String,
+    emoji: map['emoji'] as String,
+    description: map['description'] as String,
+    isSuperEmoji: (map['isSuperEmoji'] as int) == 1,
+    aliases: map['aliases'] as String?,
+  );
 }
 
 /// Finance Card model (credit or debit)
@@ -144,6 +161,46 @@ class FinanceCard {
     colorEmoji: json['colorEmoji'] as String,
     cutOffDay: json['cutOffDay'] as int?,
     paymentDay: json['paymentDay'] as int?,
+  );
+
+  Map<String, dynamic> toMap() => {
+    'id': id,
+    'name': name,
+    'type': type,
+    'colorEmoji': colorEmoji,
+    'cutOffDay': cutOffDay,
+    'paymentDay': paymentDay,
+  };
+
+  factory FinanceCard.fromMap(Map<String, dynamic> map) => FinanceCard(
+    id: map['id'] as String,
+    name: map['name'] as String,
+    type: map['type'] as String,
+    colorEmoji: map['colorEmoji'] as String,
+    cutOffDay: map['cutOffDay'] as int?,
+    paymentDay: map['paymentDay'] as int?,
+  );
+}
+
+/// Budget model
+class Budget {
+  final String categoryId;
+  final double limit;
+
+  Budget({required this.categoryId, required this.limit});
+
+  Map<String, dynamic> toJson() => {'categoryId': categoryId, 'limit': limit};
+
+  factory Budget.fromJson(Map<String, dynamic> json) => Budget(
+    categoryId: json['categoryId'] as String,
+    limit: (json['limit'] as num).toDouble(),
+  );
+
+  Map<String, dynamic> toMap() => {'categoryId': categoryId, 'limit': limit};
+
+  factory Budget.fromMap(Map<String, dynamic> map) => Budget(
+    categoryId: map['categoryId'] as String,
+    limit: (map['limit'] as num).toDouble(),
   );
 }
 
@@ -243,6 +300,47 @@ class Transaction {
         : null,
     isRecurring: json['isRecurring'] as bool? ?? false,
   );
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'amount': amount,
+      'type': type.name,
+      'categoryId': categoryId,
+      'paymentMethod': paymentMethod,
+      'date': date.toIso8601String(),
+      'createdAt': createdAt,
+      'targetCardId': targetCardId,
+      'isRecurring': isRecurring ? 1 : 0,
+      'breakdown': breakdown != null
+          ? jsonEncode(breakdown!.map((b) => b.toJson()).toList())
+          : null,
+    };
+  }
+
+  factory Transaction.fromMap(Map<String, dynamic> map) {
+    List<SubEmojiItem>? decodedBreakdown;
+    if (map['breakdown'] != null) {
+      final List decoded = jsonDecode(map['breakdown'] as String);
+      decodedBreakdown = decoded.map((b) => SubEmojiItem.fromJson(b)).toList();
+    }
+
+    return Transaction(
+      id: map['id'] as String,
+      amount: (map['amount'] as num).toDouble(),
+      type: TransactionType.values.firstWhere(
+        (e) => e.name == map['type'],
+        orElse: () => TransactionType.expense,
+      ),
+      categoryId: map['categoryId'] as String,
+      paymentMethod: map['paymentMethod'] as String,
+      date: DateTime.parse(map['date'] as String),
+      createdAt: map['createdAt'] as int,
+      targetCardId: map['targetCardId'] as String?,
+      breakdown: decodedBreakdown,
+      isRecurring: (map['isRecurring'] as int? ?? 0) == 1,
+    );
+  }
 }
 
 /// Finance data container
@@ -250,17 +348,23 @@ class FinanceData {
   final List<FinanceCategory> categories;
   final List<FinanceCard> cards;
   final List<Transaction> transactions;
+  final List<Budget> budgets;
+  final bool remindersEnabled;
 
   FinanceData({
     required this.categories,
     required this.cards,
     required this.transactions,
+    this.budgets = const [],
+    this.remindersEnabled = false,
   });
 
   Map<String, dynamic> toJson() => {
     'categories': categories.map((c) => c.toJson()).toList(),
     'cards': cards.map((c) => c.toJson()).toList(),
     'transactions': transactions.map((t) => t.toJson()).toList(),
+    'budgets': budgets.map((b) => b.toJson()).toList(),
+    'remindersEnabled': remindersEnabled,
   };
 
   factory FinanceData.fromJson(Map<String, dynamic> json) => FinanceData(
@@ -273,6 +377,12 @@ class FinanceData {
     transactions: (json['transactions'] as List)
         .map((t) => Transaction.fromJson(t as Map<String, dynamic>))
         .toList(),
+    budgets: json['budgets'] != null
+        ? (json['budgets'] as List)
+              .map((b) => Budget.fromJson(b as Map<String, dynamic>))
+              .toList()
+        : [],
+    remindersEnabled: json['remindersEnabled'] as bool? ?? false,
   );
 }
 

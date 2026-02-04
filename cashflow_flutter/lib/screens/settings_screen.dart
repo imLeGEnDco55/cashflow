@@ -103,6 +103,90 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  void _handleCSVExport() async {
+    final provider = context.read<FinanceProvider>();
+    try {
+      await provider.exportToCSV();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✅ CSV exportado y compartido'),
+            backgroundColor: AppTheme.income,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Error al exportar: $e'),
+            backgroundColor: AppTheme.expense,
+          ),
+        );
+      }
+    }
+  }
+
+  void _confirmDeleteCategory(FinanceCategory category) async {
+    final provider = context.read<FinanceProvider>();
+    if (!provider.canDeleteCategory(category.id)) {
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('⚠️ Categoría en uso'),
+          content: Text(
+            'La categoría "${category.description}" tiene transacciones asociadas. ¿Estás seguro de que quieres eliminarla?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text(
+                'Eliminar',
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        ),
+      );
+      if (confirm != true) return;
+    }
+    provider.deleteCategory(category.id);
+  }
+
+  void _confirmDeleteCard(FinanceCard card) async {
+    final provider = context.read<FinanceProvider>();
+    if (!provider.canDeleteCard(card.id)) {
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('⚠️ Tarjeta en uso'),
+          content: Text(
+            'La tarjeta "${card.name}" tiene transacciones asociadas. ¿Estás seguro de que quieres eliminarla?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text(
+                'Eliminar',
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        ),
+      );
+      if (confirm != true) return;
+    }
+    provider.deleteCard(card.id);
+  }
+
   void _showCategoryEditor({FinanceCategory? category}) {
     showModalBottomSheet(
       context: context,
@@ -115,23 +199,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
         category: category,
         onSave: (emoji, description, isSuperEmoji, aliases) {
           final provider = context.read<FinanceProvider>();
-          if (category != null) {
-            provider.updateCategory(
-              category.id,
-              emoji: emoji,
-              description: description,
-              isSuperEmoji: isSuperEmoji,
-              aliases: aliases,
-            );
-          } else {
-            provider.addCategory(
-              emoji: emoji,
-              description: description,
-              isSuperEmoji: isSuperEmoji,
-              aliases: aliases,
+          try {
+            if (category != null) {
+              provider.updateCategory(
+                category.id,
+                emoji: emoji,
+                description: description,
+                isSuperEmoji: isSuperEmoji,
+                aliases: aliases,
+              );
+            } else {
+              provider.addCategory(
+                emoji: emoji,
+                description: description,
+                isSuperEmoji: isSuperEmoji,
+                aliases: aliases,
+              );
+            }
+            Navigator.pop(context);
+          } catch (e) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  '❌ ${e.toString().replaceAll("Exception: ", "")}',
+                ),
+                backgroundColor: AppTheme.expense,
+              ),
             );
           }
-          Navigator.pop(context);
         },
       ),
     );
@@ -149,25 +244,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
         card: card,
         onSave: (name, type, colorEmoji, cutOffDay, paymentDay) {
           final provider = context.read<FinanceProvider>();
-          if (card != null) {
-            provider.updateCard(
-              card.id,
-              name: name,
-              type: type,
-              colorEmoji: colorEmoji,
-              cutOffDay: cutOffDay,
-              paymentDay: paymentDay,
-            );
-          } else {
-            provider.addCard(
-              name: name,
-              type: type,
-              colorEmoji: colorEmoji,
-              cutOffDay: cutOffDay,
-              paymentDay: paymentDay,
+          try {
+            if (card != null) {
+              provider.updateCard(
+                card.id,
+                name: name,
+                type: type,
+                colorEmoji: colorEmoji,
+                cutOffDay: cutOffDay,
+                paymentDay: paymentDay,
+              );
+            } else {
+              provider.addCard(
+                name: name,
+                type: type,
+                colorEmoji: colorEmoji,
+                cutOffDay: cutOffDay,
+                paymentDay: paymentDay,
+              );
+            }
+            Navigator.pop(context);
+          } catch (e) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  '❌ ${e.toString().replaceAll("Exception: ", "")}',
+                ),
+                backgroundColor: AppTheme.expense,
+              ),
             );
           }
-          Navigator.pop(context);
         },
       ),
     );
@@ -380,7 +486,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           if (!isDefault)
             IconButton(
               icon: Icon(Icons.delete, size: 20, color: Colors.red[300]),
-              onPressed: () => provider.deleteCategory(category.id),
+              onPressed: () => _confirmDeleteCategory(category),
             ),
         ],
       ),
@@ -446,7 +552,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           size: 20,
                           color: Colors.red[300],
                         ),
-                        onPressed: () => provider.deleteCard(card.id),
+                        onPressed: () => _confirmDeleteCard(card),
                       ),
                     ],
                   ),
@@ -470,12 +576,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Card(
       child: Column(
         children: [
+          Consumer<FinanceProvider>(
+            builder: (context, provider, child) {
+              return SwitchListTile(
+                secondary: const Icon(
+                  Icons.notifications_active,
+                  color: AppTheme.primary,
+                ),
+                title: const Text('Recordatorios de pago'),
+                subtitle: const Text('Notificar fechas de corte/pago'),
+                value: provider.remindersEnabled,
+                onChanged: (v) => provider.toggleReminders(v),
+              );
+            },
+          ),
+          const Divider(height: 1),
           ListTile(
             leading: const Icon(Icons.upload_file, color: AppTheme.primary),
             title: const Text('Exportar datos'),
             subtitle: const Text('Guardar backup en archivo JSON'),
             trailing: const Icon(Icons.chevron_right),
             onTap: _handleExport,
+          ),
+          const Divider(height: 1),
+          ListTile(
+            leading: const Icon(Icons.table_chart, color: Colors.green),
+            title: const Text('Exportar CSV'),
+            subtitle: const Text('Para Excel/Sheets'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: _handleCSVExport,
           ),
           const Divider(height: 1),
           ListTile(

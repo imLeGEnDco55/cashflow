@@ -1,35 +1,41 @@
-# CONTEXT
+# Project Context: CashFlow (Flutter)
 
-## 📌 Proyecto: CashFlow (Gestor de Finanzas Personales)
+## Overview
+Personal finance manager application migrated from a React/Vite implementation to a native Flutter app. Focuses on simplicity, emoji-based categorization, and credit card management.
 
-**Estado Actual:**
-- Rama: `main`
-- Flutter: ✅ **v1.0 Release** (En producción personal)
-- Web: ✅ Publicado en `gh-pages`
+## Tech Stack
+- **Framework**: Flutter (Dart)
+- **State Management**: Provider
+- **Persistence**: SQLite (sqflite) with cross-platform FFI support (Web/Desktop)
+- **Notifications**: flutter_local_notifications
+- **Charts**: fl_chart
+- **Utilities**: intl, uuid, csv, share_plus
 
-## 🛠 Tech Stack
+## Current State
+- **Main Features**:
+  - Calculator for quick expense/income entry.
+  - History with advanced filters (custom date range, search by aliases, type filters) and pagination.
+  - Stats with charts and monthly spending projections.
+  - Budgeting per category with progress tracking.
+  - Credit card management (cut-off/payment dates).
+  - Local notifications for payment reminders.
+  - Data management (Export/Import JSON, Export CSV).
 
-### Android (Flutter)
-- **App Name**: CA$HFLOW
-- **Config**: arm64-v8a, Icons & Splash Custom
-- **Estado**: Stable
-- Ubicación: `cashflow_flutter/`
+## Recent Changes
+- ✅ **Infrastructure Upgrade**:
+  - Migrated from SharedPreferences to **SQLite** for robust data persistence.
+  - Implemented `DatabaseService` with automatic data migration from JSON.
+  - Added support for Web/Desktop development via `sqflite_common_ffi`.
+- ✅ **Phase 1 UI/Logic Updates**:
+  - Implemented pagination and custom date range filters in `HistoryScreen`.
+  - Added `BudgetsScreen` for monthly expense control.
+  - Integrated `NotificationService` for credit card payment reminders.
+  - Added spending projections in `StatsScreen`.
 
-### Web (React)
-- React 18 + TypeScript + Vite + Tailwind
-- Ubicación: `src/`
+## URLs & Resources
+- Repository: [imLeGEnDco55/cashflow](https://github.com/imLeGEnDco55/cashflow)
 
-## 📝 Historial de Cambios Recientes
-- **Feature**: Aliases/Apodos en Categorías (Búsqueda por términos múltiples separados por coma).
-- **Cleanup**: Eliminadas categorías por defecto (excepto Pago de Tarjeta) para un "clean slate".
-- **Feature**: Transacciones Fijas/Recurrentes (isRecurring flag, toggle en editor, indicador visual).
-- **Refine**: Editor modal simplificado y eliminación de "Category Chips" en historial (búsqueda mejorada).
-- **Feature**: History PRO (search, filtros dropdown, agrupación por día, swipe bidireccional, editor modal).
-- **Feature**: Superemojis (categorías contenedor con desglose de gastos).
-- **UI**: Calculator fixed layout (no scroll), settings modals.
-- **Data**: JSON File Import/Export.
-- **Build**: Optimización architecture split.
-- **Code**: Lint fix en Settings (async context).
-
-## 🔗 URLs
-- Web: `https://imlegendco55.github.io/cashflow/`
+## Next Steps
+- Add cloud backup functionality.
+- Implement multi-currency support.
+- Refine UI animations and transitions.

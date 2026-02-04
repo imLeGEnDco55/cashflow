@@ -1,101 +1,76 @@
-# 💰 Gestor de Finanzas Personales
+# 💰 CashFlow - Gestor de Finanzas Emoji-First
 
-¡Bienvenido a tu nuevo **Gestor de Finanzas Personales**! Una aplicación moderna, intuitiva y visualmente atractiva diseñada para ayudarte a tomar el control de tu dinero. Construida con tecnologías web de vanguardia, esta herramienta te permite registrar ingresos, controlar gastos y gestionar tus tarjetas de crédito de manera inteligente.
+¡Bienvenido a **CashFlow**! Una aplicación de finanzas personales diseñada para ser rápida, visual y extremadamente útil. Olvídate de formularios aburridos; aquí tus gastos cobran vida a través de emojis y una lógica inteligente de gestión de crédito.
 
 ---
 
 ## ✨ Características Principales
 
-### 📱 Calculadora y Registro Rápido
-*   **Interfaz Intuitiva:** Ingresa montos rápidamente con una calculadora integrada en pantalla grande.
-*   **Categorización Visual:** Asigna categorías a tus movimientos usando una divertida selección de emojis.
-*   **Tipos de Transacción:** Registra fácilmente **Ingresos** (➕) y **Gastos** (➖).
-*   **Métodos de Pago:** Elige si pagaste con **Efectivo** 💵 o con **Tarjeta** 💳.
+### 📱 Registro Ultrarrápido (Emoji-First)
+*   **Calculadora Integrada:** Ingresa montos y realiza cálculos rápidos sin salir de la app.
+*   **Categorización por Emojis:** Identifica tus gastos de un vistazo (🍔 Comida, 🚗 Transporte, 🛍️ Compras).
+*   **Super-Emojis (Desglose):** ¿Un ticket de supermercado con varias cosas? Desglosa un solo gasto en múltiples categorías para un control total.
+*   **Transacciones Fijas:** Marca gastos o ingresos como recurrentes para identificarlos fácilmente.
 
-### 💳 Gestión Inteligente de Tarjetas de Crédito
-Esta app entiende la diferencia entre gastar dinero real y usar crédito:
-*   **Control de Deuda:** Los gastos con tarjeta de crédito se suman a una deuda acumulada, no se restan de tu balance inmediato.
-*   **Pagos a Tarjeta:** Registra pagos a tus tarjetas para reducir tu deuda y actualizar tu balance real.
-*   **Fechas Clave:** Configura y visualiza tus días de **Corte** y **Pago** para nunca olvidar una fecha límite.
-*   **Visualización de Deuda:** Mira claramente cuánto debes en cada tarjeta.
+### 💳 Gestión Inteligente de Crédito
+*   **Tarjetas Dinámicas:** Configura tarjetas de Débito y Crédito con colores y emojis personalizados.
+*   **Control de Ciclos:** Define días de **Corte** y **Pago**. La app te mostrará una cuenta regresiva para tus próximas obligaciones.
+*   **Notificaciones de Pago:** No vuelvas a pagar intereses. Recibe recordatorios locales antes de tu fecha de pago.
+*   **Seguimiento de Deuda:** Visualiza exactamente cuánto debes en cada tarjeta y realiza "Pagos a Tarjeta" para sanear tus finanzas.
 
-### 📊 Estadísticas y Análisis
-*   **Dashboard Visual:** Gráficos de barras y pastel para entender tus finanzas de un vistazo.
-*   **Filtros Temporales:** Analiza tu comportamiento por **Semana**, **Mes**, **Año** o Todo el historial.
-*   **Desglose por Categoría:** Descubre en qué estás gastando más (Comida 🍔, Transporte 🚌, Entretenimiento 🎬, etc.).
-*   **Comparativa:** Visualiza claramente Ingresos vs. Gastos Reales vs. Uso de Crédito.
+### 📊 Análisis y Control
+*   **Presupuestos Mensuales:** Establece límites por categoría y sigue tu progreso con barras visuales de "calor".
+*   **Estadísticas Detalladas:** Gráficos acumulados y por categoría para entender a dónde se va tu dinero.
+*   **Historial Avanzado:** Filtra por fecha, tipo de transacción, categoría o palabra clave. Paginación integrada para manejar miles de registros sin lag.
 
-### 📝 Historial Detallado
-*   **Timeline de Movimientos:** Revisa todas tus transacciones ordenadas cronológicamente.
-*   **Información Completa:** Cada entrada muestra categoría, monto, fecha y método de pago.
-*   **Edición:** Elimina transacciones erróneas con un solo toque.
-
-### ⚙️ Personalización y Ajustes
-*   **Categorías Personalizadas:** Crea tus propias categorías con emojis y descripciones únicas.
-*   **Gestión de Tarjetas:** Agrega tarjetas de Débito y Crédito, personalízalas con nombres y colores.
-*   **Respaldo de Datos:** 💾 **Exporta** toda tu información a un archivo JSON para seguridad e **Importa** datos previamente guardados.
+### 💾 Datos y Seguridad
+*   **Persistencia SQLite:** Tus datos se guardan en una base de datos local profesional, rápida y segura.
+*   **Importación/Exportación:** Respalda tu información en **JSON** o exporta tu historial a **CSV** para analizarlo en Excel/Sheets.
+*   **Privacidad Total:** Tus datos nunca salen de tu dispositivo. Sin cuentas, sin nube obligatoria, sin rastreo.
 
 ---
 
-## 🛠️ Tecnologías Utilizadas
+## 🛠️ Arquitectura Técnica
 
-Este proyecto ha sido construido con un stack moderno para asegurar rendimiento y mantenibilidad:
+La app está construida con un stack moderno para garantizar rendimiento en dispositivos Android:
 
-*   **[React](https://reactjs.org/)** - Biblioteca principal para la interfaz de usuario.
-*   **[TypeScript](https://www.typescriptlang.org/)** - Para un código más robusto y seguro.
-*   **[Vite](https://vitejs.dev/)** - Entorno de desarrollo ultrarrápido.
-*   **[Tailwind CSS](https://tailwindcss.com/)** - Framework de estilos para un diseño moderno y responsivo.
-*   **[shadcn/ui](https://ui.shadcn.com/)** - Componentes de interfaz elegantes y accesibles.
-*   **[Recharts](https://recharts.org/)** - Para gráficos estadísticos hermosos.
-*   **[Lucide React](https://lucide.dev/)** - Iconografía limpia y consistente.
+*   **[Flutter](https://flutter.dev/)** - Framework principal para una UI fluida a 60fps.
+*   **[Sqflite](https://pub.dev/packages/sqflite)** - Motor de base de datos relacional para persistencia robusta.
+*   **[Provider](https://pub.dev/packages/provider)** - Gestión de estado escalable y eficiente.
+*   **[Flutter Local Notifications](https://pub.dev/packages/flutter_local_notifications)** - Sistema de alertas para pagos.
+*   **[FL Chart](https://pub.dev/packages/fl_chart)** - Visualizaciones de datos potentes y animadas.
 
 ---
 
-## 🚀 Instalación y Ejecución Local
+## 🚀 Instalación y Desarrollo
 
-Si deseas ejecutar este proyecto en tu propia máquina, sigue estos pasos:
-
-### Prerrequisitos
-Asegúrate de tener instalado [Node.js](https://nodejs.org/) (versión 16 o superior).
+### Requisitos
+- Flutter SDK (Canal Stable)
+- Android Studio / VS Code
+- Un dispositivo Android o emulador (recomendado)
 
 ### Pasos
-
 1.  **Clona el repositorio:**
     ```bash
-    git clone <URL_DEL_REPOSITORIO>
+    git clone https://github.com/imLeGEnDco55/cashflow.git
     ```
-
-2.  **Navega al directorio del proyecto:**
+2.  **Instala dependencias:**
     ```bash
-    cd <NOMBRE_DEL_PROYECTO>
+    flutter pub get
     ```
-
-3.  **Instala las dependencias:**
+3.  **Ejecuta la aplicación:**
     ```bash
-    npm install
+    flutter run
     ```
-
-4.  **Inicia el servidor de desarrollo:**
-    ```bash
-    npm run dev
-    ```
-
-5.  **¡Listo!** Abre tu navegador en la dirección que aparece en la terminal (usualmente `http://localhost:8080`).
+    *Nota: Aunque está optimizada para Android, el proyecto cuenta con soporte experimental para Web (Chrome) y Windows Desktop para facilitar el desarrollo.*
 
 ---
 
-## 🤝 Cómo Contribuir
-
-¡Las contribuciones son bienvenidas! Si tienes ideas para mejorar la app:
-
-1.  Haz un Fork del proyecto.
-2.  Crea una rama para tu funcionalidad (`git checkout -b feature/NuevaFuncionalidad`).
-3.  Haz commit de tus cambios (`git commit -m 'Agrega nueva funcionalidad'`).
-4.  Haz push a la rama (`git push origin feature/NuevaFuncionalidad`).
-5.  Abre un Pull Request.
+## 🤝 Contribuciones y Feedback
+Este es un proyecto **MVP (Most Valuable Project)** en constante evolución. Si tienes una idea para una nueva funcionalidad o has encontrado un bug, ¡abre un issue o un pull request!
 
 ---
 
 <p align="center">
-  Hecho con ❤️ para ayudarte a dominar tus finanzas.
+  Hecho con 💡 para que dominar tu dinero sea tan fácil como enviar un emoji.
 </p>

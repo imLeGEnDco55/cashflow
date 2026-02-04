@@ -105,7 +105,16 @@ class _StatsScreenState extends State<StatsScreen> {
 
                 // Total
                 _buildTotalCard(total),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
+
+                // Projection (only for current month expenses)
+                if (_period == Period.month &&
+                    _viewType == ViewType.expenses &&
+                    total > 0) ...[
+                  _buildProjectionCard(total),
+                  const SizedBox(height: 24),
+                ],
+                const SizedBox(height: 8),
 
                 // Pie Chart
                 if (sortedCategories.isNotEmpty) ...[
@@ -202,6 +211,48 @@ class _StatsScreenState extends State<StatsScreen> {
                     : AppTheme.income,
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProjectionCard(double totalSpent) {
+    final now = DateTime.now();
+    final daysInMonth = DateTime(now.year, now.month + 1, 0).day;
+    final currentDay = now.day;
+
+    final projected = (totalSpent / currentDay) * daysInMonth;
+    final isBudgetAlert = projected > totalSpent * 1.5; // Just a dummy check
+
+    return Card(
+      color: AppTheme.surfaceVariant.withValues(alpha: 0.5),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            const Icon(Icons.trending_up, color: AppTheme.secondary),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Proyección a fin de mes',
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                  Text(
+                    '\$${projected.toStringAsFixed(0)}',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: isBudgetAlert ? AppTheme.expense : Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.info_outline, size: 16, color: Colors.grey),
           ],
         ),
       ),

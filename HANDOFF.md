@@ -1,24 +1,39 @@
-# HANDOFF - CashFlow v1.0
+# 🤝 Handoff: CashFlow (Flutter + SQLite)
 
-> **Fecha:** 01 Feb 2026
-> **Estado:** ✅ Release v1.0 Entregado
-> **Dispositivo Target:** Redmi Note 14 (arm64)
+## 📌 Estado Actual del Proyecto
+Hemos completado la **Fase 1 de Infraestructura**. La aplicación ha pasado de un almacenamiento simple en JSON (`SharedPreferences`) a una base de datos relacional robusta (**SQLite**).
 
-## 📌 Estado Actual
-La aplicación está funcional, compilada y lista para uso diario. Se ha priorizado el rendimiento y la estética visual minimalista.
+### Logros Recientes:
+- **SQLite Core**: Implementación de `DatabaseService` con soporte para Categorías, Tarjetas, Transacciones, Presupuestos y Ajustes.
+- **Migración Automática**: Lógica en `FinanceProvider` que mueve los datos del antiguo JSON a la DB en el primer inicio.
+- **Soporte Multiplataforma**: Configuración de `sqflite_common_ffi` para permitir desarrollo y testing en **Windows** y **Web (Chrome)** sin colapsar el soporte nativo de Android.
+- **Documentación**: README y CONTEXT actualizados con la nueva arquitectura.
 
-## 📦 Entregables
-- **APK:** `cashflow_flutter\build\app\outputs\flutter-apk\app-arm64-v8a-release.apk` (o `app-release.apk` dependiendo del build final exitoso).
-- **Código:** Rama `main` actualizada.
+## 🛠️ Stack Tecnológico
+- **Flutter** (Stable)
+- **Sqflite** + **FFI** (Persistencia)
+- **Provider** (Estado)
+- **Flutter Local Notifications** (Recordatorios)
+- **FL Chart** (Estadísticas)
 
-## ⚠️ Notas Técnicas (Entorno Local)
-- **Compilación:** El entorno tiene problemas con locks de Gradle y `java.util.concurrent.TimeoutException`.
-- **Workaround:** Usar `org.gradle.daemon=false` en `gradle.properties` o matar procesos Java manualmente si el build se cuelga.
-- **Iconos:** Generados con `flutter_launcher_icons`. Configuración en `pubspec.yaml`.
+## 📋 Tareas Pendientes (Próximos Pasos)
 
-## 📝 Pendientes (Para v1.1)
-- [ ] Feedback de uso real (User Testing).
-- [ ] Posibles ajustes de tamaño de fuente si el layout se siente muy apretado en pantallas distintas.
-- [ ] Revisión de backup automático (si se requiere a futuro).
+### 1. Funcionalidad de Backup & Nube
+- [ ] Implementar exportación del archivo `.db` directamente.
+- [ ] Sincronización opcional con Google Drive / Dropbox.
 
-¡Listo para la siguiente iteración! 🚀
+### 2. Pulido de UI/UX
+- [ ] **Animaciones**: Añadir transiciones más fluidas entre pestañas usando `PageController` o `Hero`.
+- [ ] **Modo Oscuro**: Revisar el contraste de algunos emojis en fondos muy oscuros.
+- [ ] **Gráficos**: Añadir herramientas de "tooltip" más detalladas en los gráficos de `fl_chart`.
+
+### 3. Nuevas Funcionalidades
+- [ ] **Multidivisa**: Permitir definir una moneda base y convertir gastos automáticos (API de cambio).
+- [ ] **Exportación PDF**: Generar reportes mensuales visuales.
+
+## ⚠️ Notas Técnicas para la Siguiente AI:
+- La clase `Transaction` de nuestro modelo entra en conflicto con la de `sqflite`. Siempre importa `sqflite` usando `hide Transaction`.
+- El `DatabaseService` inicializa el motor según la plataforma (`kIsWeb` o `defaultTargetPlatform`). No cambies esta lógica sin probar en Chrome y un emulador Android.
+
+---
+*Hecho por Antigravity - AI Partner.*

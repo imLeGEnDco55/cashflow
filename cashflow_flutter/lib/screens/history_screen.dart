@@ -20,8 +20,10 @@ class HistoryScreen extends StatefulWidget {
 class _HistoryScreenState extends State<HistoryScreen> {
   String _searchQuery = '';
   String? _selectedCategoryId; // null = all
-  String _dateFilter = 'all'; // 'today', 'week', 'month', 'all'
+  String _dateFilter = 'all'; // 'today', 'week', 'month', 'custom', 'all'
   String _typeFilter = 'all'; // 'expense', 'income', 'credit', 'all'
+  DateTimeRange? _customDateRange;
+  int _displayLimit = 100;
 
   /// Group transactions by date
   Map<String, List<Transaction>> _groupByDate(List<Transaction> transactions) {
@@ -89,6 +91,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
         final monthAgo = DateTime(now.year, now.month - 1, now.day);
         filtered = filtered.where((t) => t.date.isAfter(monthAgo)).toList();
         break;
+      case 'custom':
+        if (_customDateRange != null) {
+          filtered = filtered.where((t) {
+            return t.date.isAfter(_customDateRange!.start) &&
+                t.date.isBefore(
+                  _customDateRange!.end.add(const Duration(days: 1)),
+                );
+          }).toList();
+        }
+        break;
     }
 
     // Type filter
@@ -142,7 +154,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
         }
 
         final filtered = _filterTransactions(allTransactions, provider);
-        final grouped = _groupByDate(filtered);
+        final hasMore = filtered.length > _displayLimit;
+        final limited = filtered.take(_displayLimit).toList();
+
+        final grouped = _groupByDate(limited);
         final sortedDates = grouped.keys.toList();
 
         return Column(
@@ -155,9 +170,20 @@ class _HistoryScreenState extends State<HistoryScreen> {
               child: filtered.isEmpty
                   ? _buildNoResultsState()
                   : ListView.builder(
-                      padding: const EdgeInsets.only(bottom: 80),
-                      itemCount: sortedDates.length,
+                      padding: const EdgeInsets.only(bottom: 20),
+                      itemCount: sortedDates.length + (hasMore ? 1 : 0),
                       itemBuilder: (context, index) {
+                        if (index == sortedDates.length) {
+                          return Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: OutlinedButton(
+                              onPressed: () => setState(() {
+                                _displayLimit += 100;
+                              }),
+                              child: const Text('Cargar más'),
+                            ),
+                          );
+                        }
                         final dateLabel = sortedDates[index];
                         final dateTx = grouped[dateLabel]!;
                         final dayTotal = dateTx.fold<double>(
@@ -255,8 +281,40 @@ class _HistoryScreenState extends State<HistoryScreen> {
               'today': 'Hoy',
               'week': 'Semana',
               'month': 'Mes',
+              'custom': '📅 Rango...',
             },
-            onChanged: (v) => setState(() => _dateFilter = v),
+            onChanged: (v) async {
+              if (v == 'custom') {
+                final range = await showDateRangePicker(
+                  context: context,
+                  firstDate: DateTime(2020),
+                  lastDate: DateTime.now().add(const Duration(days: 365)),
+                  currentDate: DateTime.now(),
+                  initialDateRange: _customDateRange,
+                  builder: (context, child) {
+                    return Theme(
+                      data: Theme.of(context).copyWith(
+                        colorScheme: ColorScheme.dark(
+                          primary: AppTheme.primary,
+                          onPrimary: Colors.white,
+                          surface: AppTheme.surface,
+                          onSurface: Colors.white,
+                        ),
+                      ),
+                      child: child!,
+                    );
+                  },
+                );
+                if (range != null) {
+                  setState(() {
+                    _customDateRange = range;
+                    _dateFilter = 'custom';
+                  });
+                }
+              } else {
+                setState(() => _dateFilter = v);
+              }
+            },
           ),
           const SizedBox(width: 4),
           // Type filter dropdown

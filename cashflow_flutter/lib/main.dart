@@ -11,6 +11,7 @@ import 'providers/finance_provider.dart';
 import 'screens/calculator_screen.dart';
 import 'screens/history_screen.dart';
 import 'screens/stats_screen.dart';
+import 'screens/budgets_screen.dart';
 import 'screens/settings_screen.dart';
 import 'theme/app_theme.dart';
 
@@ -66,16 +67,18 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = const [
+  final List<Widget> _screens = [
     CalculatorScreen(),
     HistoryScreen(),
+    BudgetsScreen(),
     StatsScreen(),
     SettingsScreen(),
   ];
 
-  final List<String> _titles = const [
+  final List<String> _titles = [
     'CashFlow',
     'Historial',
+    'Presupuestos',
     'Estadísticas',
     'Ajustes',
   ];
@@ -142,6 +145,11 @@ class _MainScreenState extends State<MainScreen> {
                   icon: Icon(Icons.history_outlined),
                   activeIcon: Icon(Icons.history),
                   label: 'Historial',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.account_balance_wallet_outlined),
+                  activeIcon: Icon(Icons.account_balance_wallet),
+                  label: 'Presupuestos',
                 ),
                 BottomNavigationBarItem(
                   icon: Icon(Icons.pie_chart_outline),

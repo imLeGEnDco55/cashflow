@@ -3,9 +3,15 @@
 library;
 
 import 'dart:convert';
+import 'dart:io';
+import 'package:csv/csv.dart';
 import 'package:flutter/foundation.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/finance.dart';
+import '../services/notification_service.dart';
+import '../services/database_service.dart';
 
 const String _storageKey = 'emoji-finance-data';
 
@@ -13,6 +19,8 @@ class FinanceProvider extends ChangeNotifier {
   List<FinanceCategory> _categories = List.from(defaultCategories);
   List<FinanceCard> _cards = [];
   List<Transaction> _transactions = [];
+  List<Budget> _budgets = [];
+  bool _remindersEnabled = false;
 
   bool _isLoading = true;
 
@@ -20,6 +28,8 @@ class FinanceProvider extends ChangeNotifier {
   List<FinanceCategory> get categories => List.unmodifiable(_categories);
   List<FinanceCard> get cards => List.unmodifiable(_cards);
   List<Transaction> get transactions => List.unmodifiable(_transactions);
+  List<Budget> get budgets => List.unmodifiable(_budgets);
+  bool get remindersEnabled => _remindersEnabled;
   bool get isLoading => _isLoading;
 
   /// Balance calculation:
@@ -119,14 +129,14 @@ class FinanceProvider extends ChangeNotifier {
     );
     _transactions.insert(0, transaction);
     notifyListeners();
-    _saveData();
+    DatabaseService.instance.insertTransaction(transaction);
   }
 
   /// Delete a transaction
   void deleteTransaction(String id) {
     _transactions.removeWhere((t) => t.id == id);
     notifyListeners();
-    _saveData();
+    DatabaseService.instance.deleteTransaction(id);
   }
 
   /// Update transaction breakdown (for Superemoji detail)
@@ -137,7 +147,7 @@ class FinanceProvider extends ChangeNotifier {
         breakdown: breakdown,
       );
       notifyListeners();
-      _saveData();
+      DatabaseService.instance.updateTransaction(_transactions[index]);
     }
   }
 
@@ -149,7 +159,7 @@ class FinanceProvider extends ChangeNotifier {
         categoryId: newCategoryId,
       );
       notifyListeners();
-      _saveData();
+      DatabaseService.instance.updateTransaction(_transactions[index]);
     }
   }
 
@@ -159,7 +169,7 @@ class FinanceProvider extends ChangeNotifier {
     if (index != -1) {
       _transactions[index] = _transactions[index].copyWith(amount: newAmount);
       notifyListeners();
-      _saveData();
+      DatabaseService.instance.updateTransaction(_transactions[index]);
     }
   }
 
@@ -171,7 +181,7 @@ class FinanceProvider extends ChangeNotifier {
         isRecurring: !_transactions[index].isRecurring,
       );
       notifyListeners();
-      _saveData();
+      DatabaseService.instance.updateTransaction(_transactions[index]);
     }
   }
 
@@ -182,6 +192,11 @@ class FinanceProvider extends ChangeNotifier {
     bool isSuperEmoji = false,
     String? aliases,
   }) {
+    if (_categories.any(
+      (c) => c.description.toLowerCase() == description.toLowerCase(),
+    )) {
+      throw Exception('Ya existe una categoría con ese nombre');
+    }
     final category = FinanceCategory(
       emoji: emoji,
       description: description,
@@ -229,6 +244,18 @@ class FinanceProvider extends ChangeNotifier {
     int? cutOffDay,
     int? paymentDay,
   }) {
+    if (_cards.any((c) => c.name.toLowerCase() == name.toLowerCase())) {
+      throw Exception('Ya existe una tarjeta con ese nombre');
+    }
+    if (type == 'credit') {
+      if (cutOffDay == null || cutOffDay < 1 || cutOffDay > 31) {
+        throw Exception('Día de corte inválido (1-31)');
+      }
+      if (paymentDay == null || paymentDay < 1 || paymentDay > 31) {
+        throw Exception('Día de pago inválido (1-31)');
+      }
+    }
+
     final card = FinanceCard(
       name: name,
       type: type,
@@ -271,44 +298,134 @@ class FinanceProvider extends ChangeNotifier {
     _saveData();
   }
 
+  /// Check if category can be safely deleted
+  bool canDeleteCategory(String id) {
+    return !_transactions.any((t) => t.categoryId == id);
+  }
+
+  /// Check if card can be safely deleted
+  bool canDeleteCard(String id) {
+    return !_transactions.any(
+      (t) => t.paymentMethod == id || t.targetCardId == id,
+    );
+  }
+
+  /// Add or update a budget
+  void setBudget(String categoryId, double limit) {
+    final index = _budgets.indexWhere((b) => b.categoryId == categoryId);
+    if (limit <= 0) {
+      if (index != -1) {
+        final catId = _budgets[index].categoryId;
+        _budgets.removeAt(index);
+        DatabaseService.instance.deleteBudget(catId);
+      }
+    } else {
+      final budget = Budget(categoryId: categoryId, limit: limit);
+      if (index != -1) {
+        _budgets[index] = budget;
+      } else {
+        _budgets.add(budget);
+      }
+      DatabaseService.instance.updateBudget(budget);
+    }
+    notifyListeners();
+  }
+
+  /// Get budget for a category
+  Budget? getBudgetForCategory(String categoryId) {
+    try {
+      return _budgets.firstWhere((b) => b.categoryId == categoryId);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Toggle reminders
+  void toggleReminders(bool enabled) async {
+    _remindersEnabled = enabled;
+    if (enabled) {
+      await NotificationService.schedulePaymentReminders(_cards);
+    } else {
+      await NotificationService.schedulePaymentReminders([]);
+    }
+    notifyListeners();
+    DatabaseService.instance.setSetting(
+      'reminders_enabled',
+      enabled.toString(),
+    );
+  }
+
   // ============ PERSISTENCE ============
 
-  /// Load data from SharedPreferences
+  /// Load data from SharedPreferences or SQLite
   Future<void> loadData() async {
     _isLoading = true;
     notifyListeners();
+    await NotificationService.init();
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final stored = prefs.getString(_storageKey);
+      final db = DatabaseService.instance;
+      final isMigrated = await db.getSetting('is_migrated');
 
-      if (stored != null) {
-        final data = FinanceData.fromJson(jsonDecode(stored));
-        _categories = data.categories.isNotEmpty
-            ? data.categories
-            : List.from(defaultCategories);
-        _cards = data.cards;
-        _transactions = data.transactions;
+      if (isMigrated == 'true') {
+        _categories = await db.getCategories();
+        _cards = await db.getCards();
+        _transactions = await db.getTransactions();
+        _budgets = await db.getBudgets();
+        final rem = await db.getSetting('reminders_enabled');
+        _remindersEnabled = rem == 'true';
+      } else {
+        // Migration from SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        final stored = prefs.getString(_storageKey);
+
+        if (stored != null) {
+          final data = FinanceData.fromJson(jsonDecode(stored));
+          _categories = data.categories.isNotEmpty
+              ? data.categories
+              : List.from(defaultCategories);
+          _cards = data.cards;
+          _transactions = data.transactions;
+          _budgets = data.budgets;
+          _remindersEnabled = data.remindersEnabled;
+
+          // Save to SQLite
+          await db.saveCategories(_categories);
+          await db.saveCards(_cards);
+          await db.saveTransactions(_transactions);
+          await db.saveBudgets(_budgets);
+          await db.setSetting(
+            'reminders_enabled',
+            _remindersEnabled.toString(),
+          );
+        } else {
+          // New user, save defaults to SQLite
+          await db.saveCategories(_categories);
+          await db.setSetting('reminders_enabled', 'false');
+        }
+        await db.setSetting('is_migrated', 'true');
+      }
+
+      if (_remindersEnabled) {
+        await NotificationService.schedulePaymentReminders(_cards);
       }
     } catch (e) {
       debugPrint('Error loading finance data: $e');
-      // Keep defaults on error
     }
 
     _isLoading = false;
     notifyListeners();
   }
 
-  /// Save data to SharedPreferences (debounced internally via isolate)
+  /// Save core data to SQLite
   Future<void> _saveData() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final data = FinanceData(
-        categories: _categories,
-        cards: _cards,
-        transactions: _transactions,
-      );
-      await prefs.setString(_storageKey, jsonEncode(data.toJson()));
+      final db = DatabaseService.instance;
+      await db.saveCategories(_categories);
+      await db.saveCards(_cards);
+      await db.saveTransactions(_transactions);
+      await db.saveBudgets(_budgets);
+      await db.setSetting('reminders_enabled', _remindersEnabled.toString());
     } catch (e) {
       debugPrint('Error saving finance data: $e');
     }
@@ -320,6 +437,8 @@ class FinanceProvider extends ChangeNotifier {
       categories: _categories,
       cards: _cards,
       transactions: _transactions,
+      budgets: _budgets,
+      remindersEnabled: _remindersEnabled,
     );
     return const JsonEncoder.withIndent('  ').convert(data.toJson());
   }
@@ -331,12 +450,68 @@ class FinanceProvider extends ChangeNotifier {
       _categories = data.categories;
       _cards = data.cards;
       _transactions = data.transactions;
+      _budgets = data.budgets;
+      _remindersEnabled = data.remindersEnabled;
       notifyListeners();
-      _saveData();
+      _saveData(); // Correctly implemented to save to DB
+      if (_remindersEnabled) {
+        NotificationService.schedulePaymentReminders(_cards);
+      }
       return true;
     } catch (e) {
       debugPrint('Error importing data: $e');
       return false;
     }
+  }
+
+  /// Export transactions to CSV and share
+  Future<void> exportToCSV() async {
+    final List<List<dynamic>> rows = [];
+    rows.add([
+      'Fecha',
+      'Categoría',
+      'Monto',
+      'Tipo',
+      'Método Pago',
+      'Desglose',
+    ]);
+
+    for (var t in _transactions) {
+      final category =
+          getCategoryById(t.categoryId)?.description ?? 'Desconocida';
+      final paymentMethod = t.paymentMethod == 'cash'
+          ? 'Efectivo'
+          : (getCardById(t.paymentMethod)?.name ?? 'Tarjeta borrada');
+
+      String breakdownStr = '';
+      if (t.breakdown != null && t.breakdown!.isNotEmpty) {
+        breakdownStr = t.breakdown!
+            .map((b) {
+              final cat = getCategoryById(b.categoryId)?.description ?? '?';
+              return '$cat: \$${b.amount}';
+            })
+            .join('; ');
+      }
+
+      rows.add([
+        t.date.toIso8601String().split('T')[0],
+        category,
+        t.amount,
+        t.type.name,
+        paymentMethod,
+        breakdownStr,
+      ]);
+    }
+
+    final csv = const ListToCsvConverter().convert(rows);
+
+    // For Android/iOS
+    final dir = await getApplicationDocumentsDirectory();
+    final fileName =
+        'cashflow_export_${DateTime.now().millisecondsSinceEpoch}.csv';
+    final file = File('${dir.path}/$fileName');
+    await file.writeAsString(csv);
+
+    await Share.shareXFiles([XFile(file.path)], text: 'CashFlow CSV Export');
   }
 }
