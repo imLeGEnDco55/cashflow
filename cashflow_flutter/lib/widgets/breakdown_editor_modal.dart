@@ -102,13 +102,13 @@ class _BreakdownEditorModalState extends State<BreakdownEditorModal> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Header
-          Row(
+          const Row(
             children: [
-              const Icon(Icons.pie_chart, color: AppTheme.secondary),
-              const SizedBox(width: 12),
+              Icon(Icons.pie_chart, color: AppTheme.secondary),
+              SizedBox(width: 12),
               Text(
                 'Detallar Gasto',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
@@ -187,7 +187,7 @@ class _BreakdownEditorModalState extends State<BreakdownEditorModal> {
 
           // Add new item
           if (_breakdown.length < 8) ...[
-            Text(
+            const Text(
               'Agregar sub-item:',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),

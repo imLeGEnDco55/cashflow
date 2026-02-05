@@ -72,7 +72,7 @@ class BudgetsScreen extends StatelessWidget {
           controller: controller,
           keyboardType: TextInputType.number,
           autofocus: true,
-          decoration: InputDecoration(
+          decoration: const InputDecoration(
             labelText: 'Límite mensual',
             prefixText: r'$',
           ),

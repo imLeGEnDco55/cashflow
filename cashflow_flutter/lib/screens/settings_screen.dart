@@ -395,14 +395,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   children: [
                     // Superemojis Section
                     if (supers.isNotEmpty) ...[
-                      Row(
+                      const Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.star,
                             size: 16,
                             color: AppTheme.secondary,
                           ),
-                          const SizedBox(width: 8),
+                          SizedBox(width: 8),
                           Text(
                             'Superemojis',
                             style: TextStyle(
@@ -457,7 +457,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               bottom: -2,
               child: Container(
                 padding: const EdgeInsets.all(2),
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: AppTheme.secondary,
                   shape: BoxShape.circle,
                 ),
@@ -468,7 +468,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       title: Text(category.description),
       subtitle: category.isSuperEmoji
-          ? Text(
+          ? const Text(
               '⚡ Superemoji',
               style: TextStyle(fontSize: 11, color: AppTheme.secondary),
             )

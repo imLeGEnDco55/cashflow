@@ -68,11 +68,11 @@ class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
   final List<Widget> _screens = [
-    CalculatorScreen(),
-    HistoryScreen(),
-    BudgetsScreen(),
-    StatsScreen(),
-    SettingsScreen(),
+    const CalculatorScreen(),
+    const HistoryScreen(),
+    const BudgetsScreen(),
+    const StatsScreen(),
+    const SettingsScreen(),
   ];
 
   final List<String> _titles = [
@@ -96,7 +96,7 @@ class _MainScreenState extends State<MainScreen> {
                 children: [
                   const Text('💰', style: TextStyle(fontSize: 64)),
                   const SizedBox(height: 24),
-                  CircularProgressIndicator(color: AppTheme.primary),
+                  const CircularProgressIndicator(color: AppTheme.primary),
                   const SizedBox(height: 16),
                   Text(
                     'Cargando...',

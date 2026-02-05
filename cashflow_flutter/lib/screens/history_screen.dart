@@ -294,7 +294,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   builder: (context, child) {
                     return Theme(
                       data: Theme.of(context).copyWith(
-                        colorScheme: ColorScheme.dark(
+                        colorScheme: const ColorScheme.dark(
                           primary: AppTheme.primary,
                           onPrimary: Colors.white,
                           surface: AppTheme.surface,

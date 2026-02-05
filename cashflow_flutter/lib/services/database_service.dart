@@ -1,4 +1,3 @@
-import 'package:sqflite/sqflite.dart' hide Transaction;
 import 'package:path/path.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart' hide Transaction;
@@ -31,7 +30,17 @@ class DatabaseService {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
 
-    return await openDatabase(path, version: 1, onCreate: _createDB);
+    return await openDatabase(
+      path,
+      version: 2,
+      onConfigure: _onConfigure,
+      onCreate: _createDB,
+      onUpgrade: _onUpgrade,
+    );
+  }
+
+  Future<void> _onConfigure(Database db) async {
+    await db.execute('PRAGMA foreign_keys = ON');
   }
 
   Future<void> _createDB(Database db, int version) async {
@@ -67,14 +76,17 @@ class DatabaseService {
         createdAt INTEGER NOT NULL,
         targetCardId TEXT,
         isRecurring INTEGER NOT NULL,
-        breakdown TEXT
+        breakdown TEXT,
+        FOREIGN KEY (categoryId) REFERENCES categories (id) ON DELETE CASCADE,
+        FOREIGN KEY (targetCardId) REFERENCES cards (id) ON DELETE SET NULL
       )
     ''');
 
     await db.execute('''
       CREATE TABLE budgets (
         categoryId TEXT PRIMARY KEY,
-        "limit" REAL NOT NULL
+        "limit" REAL NOT NULL,
+        FOREIGN KEY (categoryId) REFERENCES categories (id) ON DELETE CASCADE
       )
     ''');
 
@@ -84,6 +96,26 @@ class DatabaseService {
         value TEXT NOT NULL
       )
     ''');
+
+    // Indexes for performance
+    await db.execute(
+      'CREATE INDEX idx_transactions_date ON transactions(date)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_transactions_category ON transactions(categoryId)',
+    );
+  }
+
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      // Add indexes for existing databases
+      await db.execute(
+        'CREATE INDEX idx_transactions_date ON transactions(date)',
+      );
+      await db.execute(
+        'CREATE INDEX idx_transactions_category ON transactions(categoryId)',
+      );
+    }
   }
 
   // --- CRUD Operations ---

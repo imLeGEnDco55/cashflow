@@ -96,7 +96,7 @@ class TransactionCard extends StatelessWidget {
                           bottom: -2,
                           child: Container(
                             padding: const EdgeInsets.all(2),
-                            decoration: BoxDecoration(
+                            decoration: const BoxDecoration(
                               color: AppTheme.secondary,
                               shape: BoxShape.circle,
                             ),
@@ -141,7 +141,7 @@ class TransactionCard extends StatelessWidget {
                                 ),
                                 child: Text(
                                   _badge!,
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
                                     color: AppTheme.credit,
@@ -170,7 +170,7 @@ class TransactionCard extends StatelessWidget {
                                   ),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
-                                child: Text(
+                                child: const Text(
                                   '📝 DETALLAR',
                                   style: TextStyle(
                                     fontSize: 10,
