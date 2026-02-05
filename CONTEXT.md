@@ -31,6 +31,11 @@ Personal finance manager application migrated from a React/Vite implementation t
   - Added `BudgetsScreen` for monthly expense control.
   - Integrated `NotificationService` for credit card payment reminders.
   - Added spending projections in `StatsScreen`.
+- ✅ **Technical Improvements** (New):
+  - **Database Optimized**: Added Indexes (`date`, `category`) and Foreign Keys for better performance and data integrity.
+  - **Code Quality**: Enforced stricter linting rules (`analysis_options.yaml`).
+  - **Testing**: Added initial unit tests for `Transaction` model.
+  - **Config**: Updated `.gitignore` to exclude `.agent/`.
 
 ## URLs & Resources
 - Repository: [imLeGEnDco55/cashflow](https://github.com/imLeGEnDco55/cashflow)
