@@ -8,6 +8,7 @@ class TransactionCard extends StatelessWidget {
   final Transaction transaction;
   final FinanceCategory? category;
   final FinanceCard? card;
+  final List<FinanceCategory> categories;
   final VoidCallback? onDelete;
   final VoidCallback? onTap;
 
@@ -16,6 +17,7 @@ class TransactionCard extends StatelessWidget {
     required this.transaction,
     this.category,
     this.card,
+    this.categories = const [],
     this.onDelete,
     this.onTap,
   });
@@ -225,17 +227,43 @@ class TransactionCard extends StatelessWidget {
               if (hasBreakdown) ...[
                 const SizedBox(height: 8),
                 const Divider(height: 1),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 4,
-                  children: transaction.breakdown!.map((item) {
-                    return Text(
-                      '\$${item.amount.toStringAsFixed(0)}',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[400]),
-                    );
-                  }).toList(),
-                ),
+                const SizedBox(height: 6),
+                ...transaction.breakdown!.map((item) {
+                  final subCat = categories.isEmpty
+                      ? null
+                      : categories.cast<FinanceCategory?>().firstWhere(
+                          (c) => c!.id == item.categoryId,
+                          orElse: () => null,
+                        );
+                  return Padding(
+                    padding: const EdgeInsets.only(left: 8, bottom: 2),
+                    child: Row(
+                      children: [
+                        Text(
+                          subCat?.emoji ?? '❓',
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            subCat?.description ?? '?',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[400],
+                            ),
+                          ),
+                        ),
+                        Text(
+                          '\$${item.amount.toStringAsFixed(2)}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[300],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
               ],
             ],
           ),

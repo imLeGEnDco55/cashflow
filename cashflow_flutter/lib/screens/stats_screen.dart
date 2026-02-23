@@ -80,10 +80,30 @@ class _StatsScreenState extends State<StatsScreen> {
         final filtered = _filterTransactions(provider.transactions);
         final total = filtered.fold<double>(0, (sum, t) => sum + t.amount);
 
-        // Group by category
+        // Group by category — distribute superemoji breakdowns
         final byCategory = <String, double>{};
         for (final t in filtered) {
-          byCategory[t.categoryId] = (byCategory[t.categoryId] ?? 0) + t.amount;
+          final cat = provider.getCategoryById(t.categoryId);
+          final isSuperEmoji = cat != null && cat.isSuperEmoji;
+
+          if (isSuperEmoji && t.breakdown != null && t.breakdown!.isNotEmpty) {
+            // Attribute to breakdown sub-categories
+            double brokenDown = 0;
+            for (final sub in t.breakdown!) {
+              byCategory[sub.categoryId] =
+                  (byCategory[sub.categoryId] ?? 0) + sub.amount;
+              brokenDown += sub.amount;
+            }
+            // Remainder stays with the parent superemoji
+            final remainder = t.amount - brokenDown;
+            if (remainder > 0.01) {
+              byCategory[t.categoryId] =
+                  (byCategory[t.categoryId] ?? 0) + remainder;
+            }
+          } else {
+            byCategory[t.categoryId] =
+                (byCategory[t.categoryId] ?? 0) + t.amount;
+          }
         }
 
         final sortedCategories = byCategory.entries.toList()
@@ -129,6 +149,9 @@ class _StatsScreenState extends State<StatsScreen> {
                   _buildCategoryList(sortedCategories, provider, total),
                 ] else
                   _buildEmptyState(),
+
+                // Superemoji (store) breakdown - only if applicable
+                ..._buildSuperEmojiSection(filtered, provider),
               ],
             ),
           ),
@@ -427,6 +450,174 @@ class _StatsScreenState extends State<StatsScreen> {
         }),
       ],
     );
+  }
+
+  /// Build the "Por tienda" section for superemoji transactions
+  List<Widget> _buildSuperEmojiSection(
+    List<Transaction> filtered,
+    FinanceProvider provider,
+  ) {
+    // Find transactions whose category is a superemoji
+    final superEmojiTxns = filtered.where((t) {
+      final cat = provider.getCategoryById(t.categoryId);
+      return cat != null && cat.isSuperEmoji;
+    }).toList();
+
+    if (superEmojiTxns.isEmpty) return [];
+
+    // Group by superemoji categoryId
+    final byStore = <String, List<Transaction>>{};
+    for (final t in superEmojiTxns) {
+      byStore.putIfAbsent(t.categoryId, () => []).add(t);
+    }
+
+    // Sort by total descending
+    final sortedStores = byStore.entries.toList()
+      ..sort((a, b) {
+        final totalA = a.value.fold<double>(0, (s, t) => s + t.amount);
+        final totalB = b.value.fold<double>(0, (s, t) => s + t.amount);
+        return totalB.compareTo(totalA);
+      });
+
+    return [
+      const SizedBox(height: 24),
+      const Text(
+        'Por tienda',
+        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      ),
+      const SizedBox(height: 12),
+      ...sortedStores.map((entry) {
+        final cat = provider.getCategoryById(entry.key);
+        final txns = entry.value;
+        final storeTotal = txns.fold<double>(0, (s, t) => s + t.amount);
+
+        // Collect all breakdown items across transactions
+        final allBreakdowns = <String, double>{};
+        double totalBrokenDown = 0;
+        for (final t in txns) {
+          if (t.breakdown != null) {
+            for (final sub in t.breakdown!) {
+              allBreakdowns[sub.categoryId] =
+                  (allBreakdowns[sub.categoryId] ?? 0) + sub.amount;
+              totalBrokenDown += sub.amount;
+            }
+          }
+        }
+
+        final unallocated = storeTotal - totalBrokenDown;
+
+        return Card(
+          margin: const EdgeInsets.only(bottom: 8),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Store header
+                Row(
+                  children: [
+                    Text(
+                      cat?.emoji ?? '❓',
+                      style: const TextStyle(fontSize: 24),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        cat?.description ?? 'Desconocido',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      '\$${storeTotal.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+
+                // Breakdown items
+                if (allBreakdowns.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  const Divider(height: 1),
+                  const SizedBox(height: 8),
+                  ...allBreakdowns.entries.map((sub) {
+                    final subCat = provider.getCategoryById(sub.key);
+                    return Padding(
+                      padding: const EdgeInsets.only(left: 16, bottom: 4),
+                      child: Row(
+                        children: [
+                          Text(
+                            subCat?.emoji ?? '❓',
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              subCat?.description ?? '?',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey[400],
+                              ),
+                            ),
+                          ),
+                          Text(
+                            '\$${sub.value.toStringAsFixed(2)}',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey[300],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
+
+                // Unallocated indicator
+                if (unallocated > 0.01) ...[
+                  const SizedBox(height: 4),
+                  if (allBreakdowns.isEmpty) ...[
+                    const Divider(height: 1),
+                    const SizedBox(height: 8),
+                  ],
+                  Padding(
+                    padding: const EdgeInsets.only(left: 16),
+                    child: Row(
+                      children: [
+                        const Text('📦', style: TextStyle(fontSize: 14)),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Sin desglosar',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.amber[300],
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          '\$${unallocated.toStringAsFixed(2)}',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.amber[300],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      }),
+    ];
   }
 
   Widget _buildEmptyState() {

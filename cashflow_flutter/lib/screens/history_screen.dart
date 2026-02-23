@@ -459,6 +459,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         transaction: transaction,
         category: category,
         card: card,
+        categories: provider.categories,
         onDelete: () {}, // Handled by swipe
         onTap: () => _showTransactionEditor(provider, transaction),
       ),

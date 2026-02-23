@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "flutter": "cd cashflow_flutter && flutter run -d chrome",
+    "flutter:clean": "cd cashflow_flutter && flutter clean && flutter pub get",
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
