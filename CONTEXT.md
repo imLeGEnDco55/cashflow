@@ -36,6 +36,7 @@ Personal finance manager application migrated from a React/Vite implementation t
   - **Code Quality**: Enforced stricter linting rules (`analysis_options.yaml`).
   - **Testing**: Added initial unit tests for `Transaction` model.
   - **Config**: Updated `.gitignore` to exclude `.agent/`.
+  - **Android**: Added `POST_NOTIFICATIONS` permission and enabled R8 code shrinking for release builds.
 
 ## URLs & Resources
 - Repository: [imLeGEnDco55/cashflow](https://github.com/imLeGEnDco55/cashflow)
