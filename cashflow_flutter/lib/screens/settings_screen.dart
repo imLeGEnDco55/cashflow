@@ -197,7 +197,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       builder: (context) => _CategoryEditor(
         category: category,
-        onSave: (emoji, description, isSuperEmoji, aliases) {
+        onSave: (emoji, description, isSuperEmoji, aliases, type) {
           final provider = context.read<FinanceProvider>();
           try {
             if (category != null) {
@@ -207,6 +207,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 description: description,
                 isSuperEmoji: isSuperEmoji,
                 aliases: aliases,
+                type: type,
               );
             } else {
               provider.addCategory(
@@ -214,6 +215,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 description: description,
                 isSuperEmoji: isSuperEmoji,
                 aliases: aliases,
+                type: type,
               );
             }
             Navigator.pop(context);
@@ -349,7 +351,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
               .where((c) => c.id != 'credit-payment')
               .toList();
           final supers = cats.where((c) => c.isSuperEmoji).toList();
-          final normals = cats.where((c) => !c.isSuperEmoji).toList();
+          final expenses = cats
+              .where((c) => !c.isSuperEmoji && c.isExpense)
+              .toList();
+          final incomes = cats
+              .where((c) => !c.isSuperEmoji && c.isIncome)
+              .toList();
 
           return Column(
             children: [
@@ -397,11 +404,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     if (supers.isNotEmpty) ...[
                       const Row(
                         children: [
-                          Icon(
-                            Icons.star,
-                            size: 16,
-                            color: AppTheme.secondary,
-                          ),
+                          Icon(Icons.star, size: 16, color: AppTheme.secondary),
                           SizedBox(width: 8),
                           Text(
                             'Superemojis',
@@ -418,16 +421,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       const Divider(),
                       const SizedBox(height: 8),
                     ],
-                    // Normal Categories Section
-                    Text(
-                      'Categorías',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey[400],
-                      ),
+                    // Expense Categories Section
+                    const Row(
+                      children: [
+                        Text('💸 ', style: TextStyle(fontSize: 14)),
+                        Text(
+                          'Gastos',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.expense,
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 8),
-                    ...normals.map((c) => _buildCategoryTile(c, provider)),
+                    ...expenses.map((c) => _buildCategoryTile(c, provider)),
+                    if (incomes.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      const Divider(),
+                      const SizedBox(height: 8),
+                      // Income Categories Section
+                      const Row(
+                        children: [
+                          Text('💰 ', style: TextStyle(fontSize: 14)),
+                          Text(
+                            'Ingresos',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.income,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      ...incomes.map((c) => _buildCategoryTile(c, provider)),
+                    ],
                     const SizedBox(height: 24),
                   ],
                 ),
@@ -628,6 +656,7 @@ class _CategoryEditor extends StatefulWidget {
     String description,
     bool isSuperEmoji,
     String? aliases,
+    String type,
   )
   onSave;
 
@@ -642,6 +671,7 @@ class _CategoryEditorState extends State<_CategoryEditor> {
   late TextEditingController _descController;
   late TextEditingController _aliasesController;
   late bool _isSuperEmoji;
+  late String _type;
 
   @override
   void initState() {
@@ -654,6 +684,7 @@ class _CategoryEditorState extends State<_CategoryEditor> {
       text: widget.category?.aliases ?? '',
     );
     _isSuperEmoji = widget.category?.isSuperEmoji ?? false;
+    _type = widget.category?.type ?? 'expense';
   }
 
   @override
@@ -830,6 +861,63 @@ class _CategoryEditorState extends State<_CategoryEditor> {
             ),
           ),
 
+          const SizedBox(height: 12),
+
+          // Type Toggle: Gasto / Ingreso
+          Container(
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceVariant,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                children: [
+                  Icon(
+                    _type == 'income' ? Icons.trending_up : Icons.trending_down,
+                    color: _type == 'income'
+                        ? AppTheme.income
+                        : AppTheme.expense,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _type == 'income' ? 'Ingreso' : 'Gasto',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: _type == 'income'
+                                ? AppTheme.income
+                                : AppTheme.expense,
+                          ),
+                        ),
+                        Text(
+                          _type == 'income'
+                              ? 'Aparece solo en modo +'
+                              : 'Aparece solo en modo -',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[400],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Switch(
+                    value: _type == 'income',
+                    onChanged: (v) =>
+                        setState(() => _type = v ? 'income' : 'expense'),
+                    activeThumbColor: AppTheme.income,
+                    inactiveThumbColor: AppTheme.expense,
+                  ),
+                ],
+              ),
+            ),
+          ),
+
           const SizedBox(height: 24),
 
           Row(
@@ -853,6 +941,7 @@ class _CategoryEditorState extends State<_CategoryEditor> {
                         _descController.text.trim(),
                         _isSuperEmoji,
                         aliases,
+                        _type,
                       );
                     }
                   },

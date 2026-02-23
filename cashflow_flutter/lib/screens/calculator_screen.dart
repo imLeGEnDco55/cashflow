@@ -376,8 +376,16 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   // _buildTypeToggle removed as it is now integrated/replaced
 
   Widget _buildSuperemojiRow(FinanceProvider provider) {
+    final typeFilter = _transactionType == TransactionType.income
+        ? 'income'
+        : 'expense';
     final superemojis = provider.categories
-        .where((c) => c.isSuperEmoji && c.id != 'credit-payment')
+        .where(
+          (c) =>
+              c.isSuperEmoji &&
+              c.id != 'credit-payment' &&
+              c.type == typeFilter,
+        )
         .toList();
 
     if (superemojis.isEmpty) {
@@ -437,9 +445,17 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   }
 
   Widget _buildCategoryGrid(FinanceProvider provider) {
-    // Exclude credit-payment and Superemojis (they have their own row)
+    final typeFilter = _transactionType == TransactionType.income
+        ? 'income'
+        : 'expense';
+    // Exclude credit-payment, Superemojis, and filter by type
     var categories = provider.categories
-        .where((c) => c.id != 'credit-payment' && !c.isSuperEmoji)
+        .where(
+          (c) =>
+              c.id != 'credit-payment' &&
+              !c.isSuperEmoji &&
+              c.type == typeFilter,
+        )
         .toList();
 
     if (_searchQuery.isNotEmpty) {

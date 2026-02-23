@@ -32,7 +32,7 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onConfigure: _onConfigure,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
@@ -50,6 +50,7 @@ class DatabaseService {
         emoji TEXT NOT NULL,
         description TEXT NOT NULL,
         isSuperEmoji INTEGER NOT NULL,
+        type TEXT NOT NULL DEFAULT 'expense',
         aliases TEXT
       )
     ''');
@@ -114,6 +115,12 @@ class DatabaseService {
       );
       await db.execute(
         'CREATE INDEX idx_transactions_category ON transactions(categoryId)',
+      );
+    }
+    if (oldVersion < 3) {
+      // Add type column to categories
+      await db.execute(
+        "ALTER TABLE categories ADD COLUMN type TEXT NOT NULL DEFAULT 'expense'",
       );
     }
   }

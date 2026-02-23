@@ -190,6 +190,7 @@ class FinanceProvider extends ChangeNotifier {
     required String emoji,
     required String description,
     bool isSuperEmoji = false,
+    String type = 'expense',
     String? aliases,
   }) {
     if (_categories.any(
@@ -201,6 +202,7 @@ class FinanceProvider extends ChangeNotifier {
       emoji: emoji,
       description: description,
       isSuperEmoji: isSuperEmoji,
+      type: type,
       aliases: aliases,
     );
     _categories.add(category);
@@ -214,6 +216,7 @@ class FinanceProvider extends ChangeNotifier {
     String? emoji,
     String? description,
     bool? isSuperEmoji,
+    String? type,
     String? aliases,
   }) {
     final index = _categories.indexWhere((c) => c.id == id);
@@ -222,6 +225,7 @@ class FinanceProvider extends ChangeNotifier {
         emoji: emoji,
         description: description,
         isSuperEmoji: isSuperEmoji,
+        type: type,
         aliases: aliases,
       );
       notifyListeners();

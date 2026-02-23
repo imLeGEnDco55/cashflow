@@ -12,7 +12,7 @@ class BudgetsScreen extends StatelessWidget {
     return Consumer<FinanceProvider>(
       builder: (context, provider, _) {
         final categories = provider.categories
-            .where((c) => c.id != 'credit-payment')
+            .where((c) => c.id != 'credit-payment' && c.isExpense)
             .toList();
 
         // Calculate spending for current month for each category

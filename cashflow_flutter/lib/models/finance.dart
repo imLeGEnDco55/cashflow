@@ -34,6 +34,7 @@ class FinanceCategory {
   final String emoji;
   final String description;
   final bool isSuperEmoji;
+  final String type; // 'expense' or 'income'
   final String? aliases; // Comma-separated alternative names for search
 
   FinanceCategory({
@@ -41,6 +42,7 @@ class FinanceCategory {
     required this.emoji,
     required this.description,
     this.isSuperEmoji = false,
+    this.type = 'expense',
     this.aliases,
   }) : id = id ?? _uuid.v4();
 
@@ -59,10 +61,14 @@ class FinanceCategory {
     return searchTerms.any((term) => term.contains(q));
   }
 
+  bool get isIncome => type == 'income';
+  bool get isExpense => type == 'expense';
+
   FinanceCategory copyWith({
     String? emoji,
     String? description,
     bool? isSuperEmoji,
+    String? type,
     String? aliases,
   }) {
     return FinanceCategory(
@@ -70,6 +76,7 @@ class FinanceCategory {
       emoji: emoji ?? this.emoji,
       description: description ?? this.description,
       isSuperEmoji: isSuperEmoji ?? this.isSuperEmoji,
+      type: type ?? this.type,
       aliases: aliases ?? this.aliases,
     );
   }
@@ -79,6 +86,7 @@ class FinanceCategory {
     'emoji': emoji,
     'description': description,
     'isSuperEmoji': isSuperEmoji,
+    'type': type,
     if (aliases != null) 'aliases': aliases,
   };
 
@@ -88,6 +96,7 @@ class FinanceCategory {
         emoji: json['emoji'] as String,
         description: json['description'] as String,
         isSuperEmoji: json['isSuperEmoji'] as bool? ?? false,
+        type: json['type'] as String? ?? 'expense',
         aliases: json['aliases'] as String?,
       );
 
@@ -96,6 +105,7 @@ class FinanceCategory {
     'emoji': emoji,
     'description': description,
     'isSuperEmoji': isSuperEmoji ? 1 : 0,
+    'type': type,
     'aliases': aliases,
   };
 
@@ -104,6 +114,7 @@ class FinanceCategory {
     emoji: map['emoji'] as String,
     description: map['description'] as String,
     isSuperEmoji: (map['isSuperEmoji'] as int) == 1,
+    type: map['type'] as String? ?? 'expense',
     aliases: map['aliases'] as String?,
   );
 }
