@@ -1,6 +1,11 @@
 // App Theme - Dark theme inspired by original shadcn/ui design
 import 'package:flutter/material.dart';
 
+// Animation duration constants
+const kAnimFast = Duration(milliseconds: 150);
+const kAnimNormal = Duration(milliseconds: 250);
+const kAnimSlow = Duration(milliseconds: 400);
+
 class AppTheme {
   static const Color primary = Color(0xFF8B5CF6); // Purple
   static const Color secondary = Color(0xFF06B6D4); // Cyan
@@ -63,6 +68,20 @@ class AppTheme {
       dialogTheme: DialogThemeData(
         backgroundColor: surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 6,
+      ),
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.windows: FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.linux: FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.macOS: FadeUpwardsPageTransitionsBuilder(),
+        },
       ),
     );
   }

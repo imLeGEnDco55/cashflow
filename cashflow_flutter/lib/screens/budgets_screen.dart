@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/finance.dart';
 import '../providers/finance_provider.dart';
 import '../theme/app_theme.dart';
+import '../widgets/stagger_animation.dart';
 
 class BudgetsScreen extends StatelessWidget {
   const BudgetsScreen({super.key});
@@ -43,11 +44,15 @@ class BudgetsScreen extends StatelessWidget {
             final budget = provider.getBudgetForCategory(cat.id);
             final spent = spendingByCat[cat.id] ?? 0.0;
 
-            return _BudgetCard(
-              category: cat,
-              budget: budget,
-              spent: spent,
-              onTap: () => _showSetBudgetDialog(context, provider, cat, budget),
+            return StaggeredFadeSlide(
+              index: index,
+              child: _BudgetCard(
+                category: cat,
+                budget: budget,
+                spent: spent,
+                onTap: () =>
+                    _showSetBudgetDialog(context, provider, cat, budget),
+              ),
             );
           },
         );
@@ -184,20 +189,27 @@ class _BudgetCard extends StatelessWidget {
               ),
               if (hasBudget) ...[
                 const SizedBox(height: 12),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: progress,
-                    backgroundColor: Colors.grey[800],
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      isOver
-                          ? AppTheme.expense
-                          : (progress > 0.8
-                                ? AppTheme.credit
-                                : AppTheme.income),
-                    ),
-                    minHeight: 8,
-                  ),
+                TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0, end: progress),
+                  duration: const Duration(milliseconds: 800),
+                  curve: Curves.easeOutCubic,
+                  builder: (context, animatedProgress, _) {
+                    return ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: animatedProgress,
+                        backgroundColor: Colors.grey[800],
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          isOver
+                              ? AppTheme.expense
+                              : (progress > 0.8
+                                    ? AppTheme.credit
+                                    : AppTheme.income),
+                        ),
+                        minHeight: 8,
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 8),
                 Row(

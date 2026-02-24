@@ -64,8 +64,10 @@ class MainScreen extends StatefulWidget {
   State<MainScreen> createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {
+class _MainScreenState extends State<MainScreen>
+    with SingleTickerProviderStateMixin {
   int _currentIndex = 0;
+  int _previousIndex = 0;
 
   final List<Widget> _screens = [
     const CalculatorScreen(),
@@ -108,16 +110,43 @@ class _MainScreenState extends State<MainScreen> {
           );
         }
 
+        final goingRight = _currentIndex > _previousIndex;
+
         return Scaffold(
           appBar: AppBar(
-            title: Text(
-              _titles[_currentIndex],
-              style: const TextStyle(fontWeight: FontWeight.bold),
+            title: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: Text(
+                _titles[_currentIndex],
+                key: ValueKey(_currentIndex),
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
             ),
           ),
           body: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            child: _screens[_currentIndex],
+            duration: const Duration(milliseconds: 250),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            transitionBuilder: (child, animation) {
+              final isIncoming = child.key == ValueKey(_currentIndex);
+              final slideOffset = Tween<Offset>(
+                begin: Offset(
+                  isIncoming
+                      ? (goingRight ? 0.05 : -0.05)
+                      : (goingRight ? -0.05 : 0.05),
+                  0,
+                ),
+                end: Offset.zero,
+              ).animate(animation);
+              return FadeTransition(
+                opacity: animation,
+                child: SlideTransition(position: slideOffset, child: child),
+              );
+            },
+            child: KeyedSubtree(
+              key: ValueKey(_currentIndex),
+              child: _screens[_currentIndex],
+            ),
           ),
           bottomNavigationBar: Container(
             decoration: BoxDecoration(
@@ -133,7 +162,10 @@ class _MainScreenState extends State<MainScreen> {
               currentIndex: _currentIndex,
               onTap: (index) {
                 HapticFeedback.selectionClick();
-                setState(() => _currentIndex = index);
+                setState(() {
+                  _previousIndex = _currentIndex;
+                  _currentIndex = index;
+                });
               },
               items: const [
                 BottomNavigationBarItem(

@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../models/finance.dart';
 import '../providers/finance_provider.dart';
 import '../theme/app_theme.dart';
+import '../widgets/stagger_animation.dart';
 
 class CalculatorScreen extends StatefulWidget {
   const CalculatorScreen({super.key});
@@ -262,8 +263,8 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
               'Balance',
               style: TextStyle(color: Colors.grey, fontSize: 14),
             ),
-            Text(
-              '\$${provider.balance.toStringAsFixed(2)}',
+            AnimatedCounter(
+              value: provider.balance,
               style: TextStyle(
                 fontSize: 42,
                 fontWeight: FontWeight.bold,
@@ -489,29 +490,40 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           },
           child: Tooltip(
             message: category.description,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? AppTheme.primary.withValues(alpha: 0.3)
-                    : AppTheme.surface, // Darker background for emojis
-                borderRadius: BorderRadius.circular(14),
-                border: isSelected
-                    ? Border.all(color: AppTheme.primary, width: 2)
-                    : null,
-                boxShadow: [
-                  if (!isSelected)
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 2,
-                      offset: const Offset(0, 2),
-                    ),
-                ],
-              ),
-              child: Center(
-                child: Text(
-                  category.emoji,
-                  style: const TextStyle(fontSize: 28), // Larger emojis
+            child: AnimatedScale(
+              scale: isSelected ? 1.15 : 1.0,
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOutBack,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? AppTheme.primary.withValues(alpha: 0.3)
+                      : AppTheme.surface,
+                  borderRadius: BorderRadius.circular(14),
+                  border: isSelected
+                      ? Border.all(color: AppTheme.primary, width: 2)
+                      : null,
+                  boxShadow: [
+                    if (!isSelected)
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 2,
+                        offset: const Offset(0, 2),
+                      ),
+                    if (isSelected)
+                      BoxShadow(
+                        color: AppTheme.primary.withValues(alpha: 0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    category.emoji,
+                    style: const TextStyle(fontSize: 28),
+                  ),
                 ),
               ),
             ),

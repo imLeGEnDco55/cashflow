@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import '../models/finance.dart';
 import '../providers/finance_provider.dart';
 import '../widgets/transaction_card.dart';
+import '../widgets/stagger_animation.dart';
 import '../theme/app_theme.dart';
 
 class HistoryScreen extends StatefulWidget {
@@ -225,8 +226,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
                               ),
                             ),
                             // Transactions for this date
-                            ...dateTx.map(
-                              (t) => _buildSwipeableTransaction(t, provider),
+                            ...dateTx.asMap().entries.map(
+                              (entry) => StaggeredFadeSlide(
+                                index: entry.key,
+                                child: _buildSwipeableTransaction(
+                                  entry.value,
+                                  provider,
+                                ),
+                              ),
                             ),
                           ],
                         );

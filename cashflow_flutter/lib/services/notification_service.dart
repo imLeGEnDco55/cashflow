@@ -20,17 +20,21 @@ class NotificationService {
   }
 
   static Future<void> schedulePaymentReminders(List<FinanceCard> cards) async {
-    await _notifications.cancelAll();
+    try {
+      await _notifications.cancelAll();
 
-    for (var card in cards) {
-      if (card.type == 'credit' && card.paymentDay != null) {
-        await _scheduleMonthly(
-          id: card.id.hashCode,
-          title: '💳 Pago de tarjeta',
-          body: 'Hoy es día de pago para "${card.name}"',
-          day: card.paymentDay!,
-        );
+      for (var card in cards) {
+        if (card.type == 'credit' && card.paymentDay != null) {
+          await _scheduleMonthly(
+            id: card.id.hashCode,
+            title: '💳 Pago de tarjeta',
+            body: 'Hoy es día de pago para "${card.name}"',
+            day: card.paymentDay!,
+          );
+        }
       }
+    } catch (_) {
+      // Notifications not available on web platform
     }
   }
 

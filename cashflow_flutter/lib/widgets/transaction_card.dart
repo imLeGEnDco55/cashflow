@@ -34,6 +34,18 @@ class TransactionCard extends StatelessWidget {
     }
   }
 
+  Color get _cardTint {
+    switch (transaction.type) {
+      case TransactionType.income:
+        return AppTheme.income;
+      case TransactionType.expense:
+      case TransactionType.creditPayment:
+        return AppTheme.expense;
+      case TransactionType.creditExpense:
+        return AppTheme.credit;
+    }
+  }
+
   String get _prefix {
     switch (transaction.type) {
       case TransactionType.income:
@@ -78,6 +90,11 @@ class TransactionCard extends StatelessWidget {
       onTap: onTap,
       child: Card(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        color: _cardTint.withValues(alpha: 0.08),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: _cardTint.withValues(alpha: 0.3), width: 1.5),
+        ),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(

@@ -7,6 +7,7 @@ import 'package:fl_chart/fl_chart.dart';
 import '../models/finance.dart';
 import '../providers/finance_provider.dart';
 import '../theme/app_theme.dart';
+import '../widgets/stagger_animation.dart';
 
 enum Period { week, month, year }
 
@@ -224,8 +225,8 @@ class _StatsScreenState extends State<StatsScreen> {
               style: TextStyle(color: Colors.grey[400], fontSize: 14),
             ),
             const SizedBox(height: 8),
-            Text(
-              '\$${total.toStringAsFixed(2)}',
+            AnimatedCounter(
+              value: total,
               style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
@@ -264,8 +265,9 @@ class _StatsScreenState extends State<StatsScreen> {
                     'Proyección a fin de mes',
                     style: TextStyle(fontSize: 12, color: Colors.grey),
                   ),
-                  Text(
-                    '\$${projected.toStringAsFixed(0)}',
+                  AnimatedCounter(
+                    value: projected,
+                    decimals: 0,
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -319,7 +321,7 @@ class _StatsScreenState extends State<StatsScreen> {
                           category?.emoji ?? '❓',
                           style: const TextStyle(fontSize: 16),
                         )
-                      : null,
+                      : const SizedBox.shrink(),
                   badgePositionPercentageOffset: 1.3,
                 );
               }).toList(),
