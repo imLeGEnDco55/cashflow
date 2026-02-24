@@ -1,5 +1,6 @@
 // Reusable staggered fade+slide animation widget
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class StaggeredFadeSlide extends StatefulWidget {
   final int index;
@@ -85,15 +86,16 @@ class AnimatedCounter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final formatter = decimals > 0
+        ? NumberFormat('#,##0.${'0' * decimals}', 'en_US')
+        : NumberFormat('#,##0', 'en_US');
+
     return TweenAnimationBuilder<double>(
       tween: Tween(end: value),
       duration: duration,
       curve: Curves.easeOutCubic,
       builder: (context, animatedValue, _) {
-        return Text(
-          '$prefix${animatedValue.toStringAsFixed(decimals)}',
-          style: style,
-        );
+        return Text('$prefix${formatter.format(animatedValue)}', style: style);
       },
     );
   }

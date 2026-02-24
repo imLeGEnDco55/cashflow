@@ -214,7 +214,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                   ),
                                   const Spacer(),
                                   Text(
-                                    '${dayTotal >= 0 ? '+' : ''}\$${dayTotal.toStringAsFixed(0)}',
+                                    '${dayTotal >= 0 ? '+' : ''}\$${NumberFormat('#,##0', 'en_US').format(dayTotal)}',
                                     style: TextStyle(
                                       fontSize: 12,
                                       color: dayTotal >= 0
@@ -467,8 +467,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
         category: category,
         card: card,
         categories: provider.categories,
-        onDelete: () {}, // Handled by swipe
-        onTap: () => _showTransactionEditor(provider, transaction),
       ),
     );
   }

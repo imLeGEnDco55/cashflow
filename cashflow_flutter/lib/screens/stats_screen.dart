@@ -2,6 +2,7 @@
 // Translated from StatsScreen.tsx
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../models/finance.dart';
@@ -444,7 +445,7 @@ class _StatsScreenState extends State<StatsScreen> {
               title: Text(category?.description ?? 'Desconocido'),
               subtitle: Text('${percentage.toStringAsFixed(1)}%'),
               trailing: Text(
-                '\$${item.value.toStringAsFixed(2)}',
+                '\$${NumberFormat('#,##0.00', 'en_US').format(item.value)}',
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
@@ -533,7 +534,7 @@ class _StatsScreenState extends State<StatsScreen> {
                       ),
                     ),
                     Text(
-                      '\$${storeTotal.toStringAsFixed(2)}',
+                      '\$${NumberFormat('#,##0.00', 'en_US').format(storeTotal)}',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -568,7 +569,7 @@ class _StatsScreenState extends State<StatsScreen> {
                             ),
                           ),
                           Text(
-                            '\$${sub.value.toStringAsFixed(2)}',
+                            '\$${NumberFormat('#,##0.00', 'en_US').format(sub.value)}',
                             style: TextStyle(
                               fontSize: 13,
                               color: Colors.grey[300],
@@ -604,7 +605,7 @@ class _StatsScreenState extends State<StatsScreen> {
                           ),
                         ),
                         Text(
-                          '\$${unallocated.toStringAsFixed(2)}',
+                          '\$${NumberFormat('#,##0.00', 'en_US').format(unallocated)}',
                           style: TextStyle(
                             fontSize: 13,
                             color: Colors.amber[300],

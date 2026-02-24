@@ -4,13 +4,13 @@ import 'package:intl/intl.dart';
 import '../models/finance.dart';
 import '../theme/app_theme.dart';
 
+final _currencyFormat = NumberFormat('#,##0.00', 'en_US');
+
 class TransactionCard extends StatelessWidget {
   final Transaction transaction;
   final FinanceCategory? category;
   final FinanceCard? card;
   final List<FinanceCategory> categories;
-  final VoidCallback? onDelete;
-  final VoidCallback? onTap;
 
   const TransactionCard({
     super.key,
@@ -18,8 +18,6 @@ class TransactionCard extends StatelessWidget {
     this.category,
     this.card,
     this.categories = const [],
-    this.onDelete,
-    this.onTap,
   });
 
   Color get _amountColor {
@@ -86,204 +84,194 @@ class TransactionCard extends StatelessWidget {
     final hasBreakdown =
         transaction.breakdown != null && transaction.breakdown!.isNotEmpty;
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Card(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        color: _cardTint.withValues(alpha: 0.08),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: _cardTint.withValues(alpha: 0.3), width: 1.5),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  // Emoji
-                  Stack(
-                    children: [
-                      Text(
-                        category?.emoji ?? '❓',
-                        style: const TextStyle(fontSize: 36),
-                      ),
-                      if (isSuperEmoji)
-                        Positioned(
-                          right: -2,
-                          bottom: -2,
-                          child: Container(
-                            padding: const EdgeInsets.all(2),
-                            decoration: const BoxDecoration(
-                              color: AppTheme.secondary,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.star,
-                              size: 12,
-                              color: Colors.white,
-                            ),
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      color: _cardTint.withValues(alpha: 0.08),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: _cardTint.withValues(alpha: 0.3), width: 1.5),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                // Emoji
+                Stack(
+                  children: [
+                    Text(
+                      category?.emoji ?? '❓',
+                      style: const TextStyle(fontSize: 36),
+                    ),
+                    if (isSuperEmoji)
+                      Positioned(
+                        right: -2,
+                        bottom: -2,
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: const BoxDecoration(
+                            color: AppTheme.secondary,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.star,
+                            size: 12,
+                            color: Colors.white,
                           ),
                         ),
+                      ),
+                  ],
+                ),
+                const SizedBox(width: 16),
+
+                // Details
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              category?.description ?? 'Desconocido',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (_badge != null) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppTheme.credit.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                _badge!,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.credit,
+                                ),
+                              ),
+                            ),
+                          ],
+                          if (transaction.isRecurring) ...[
+                            const SizedBox(width: 6),
+                            Icon(
+                              Icons.repeat,
+                              size: 14,
+                              color: AppTheme.income.withValues(alpha: 0.7),
+                            ),
+                          ],
+                          if (isSuperEmoji && !hasBreakdown) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppTheme.secondary.withValues(
+                                  alpha: 0.2,
+                                ),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Text(
+                                '📝 DETALLAR',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.secondary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${dateFormat.format(transaction.date)} • $_paymentMethod',
+                        style: TextStyle(color: Colors.grey[400], fontSize: 13),
+                      ),
                     ],
                   ),
-                  const SizedBox(width: 16),
+                ),
 
-                  // Details
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                category?.description ?? 'Desconocido',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 16,
-                                ),
-                                overflow: TextOverflow.ellipsis,
+                // Amount
+                Text(
+                  '$_prefix\$${_currencyFormat.format(transaction.amount)}',
+                  style: TextStyle(
+                    color: _amountColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
+
+            // Breakdown row (if exists)
+            if (hasBreakdown) ...[
+              const SizedBox(height: 8),
+              const Divider(height: 1),
+              const SizedBox(height: 6),
+              ...transaction.breakdown!
+                  .where((item) {
+                    // Hide income categories from breakdown
+                    final subCat = categories.isEmpty
+                        ? null
+                        : categories.cast<FinanceCategory?>().firstWhere(
+                            (c) => c!.id == item.categoryId,
+                            orElse: () => null,
+                          );
+                    return subCat == null || !subCat.isIncome;
+                  })
+                  .map((item) {
+                    final subCat = categories.isEmpty
+                        ? null
+                        : categories.cast<FinanceCategory?>().firstWhere(
+                            (c) => c!.id == item.categoryId,
+                            orElse: () => null,
+                          );
+                    return Padding(
+                      padding: const EdgeInsets.only(left: 8, bottom: 2),
+                      child: Row(
+                        children: [
+                          Text(
+                            subCat?.emoji ?? '❓',
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              subCat?.description ?? '?',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[400],
                               ),
                             ),
-                            if (_badge != null) ...[
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.credit.withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  _badge!,
-                                  style: const TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppTheme.credit,
-                                  ),
-                                ),
-                              ),
-                            ],
-                            if (transaction.isRecurring) ...[
-                              const SizedBox(width: 6),
-                              Icon(
-                                Icons.repeat,
-                                size: 14,
-                                color: AppTheme.income.withValues(alpha: 0.7),
-                              ),
-                            ],
-                            if (isSuperEmoji && !hasBreakdown) ...[
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.secondary.withValues(
-                                    alpha: 0.2,
-                                  ),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: const Text(
-                                  '📝 DETALLAR',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppTheme.secondary,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${dateFormat.format(transaction.date)} • $_paymentMethod',
-                          style: TextStyle(
-                            color: Colors.grey[400],
-                            fontSize: 13,
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Amount
-                  Text(
-                    '$_prefix\$${transaction.amount.toStringAsFixed(2)}',
-                    style: TextStyle(
-                      color: _amountColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-
-                  // Delete button
-                  if (onDelete != null) ...[
-                    const SizedBox(width: 8),
-                    IconButton(
-                      icon: Icon(
-                        Icons.delete_outline,
-                        color: Colors.grey[600],
-                        size: 20,
-                      ),
-                      onPressed: onDelete,
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                    ),
-                  ],
-                ],
-              ),
-
-              // Breakdown row (if exists)
-              if (hasBreakdown) ...[
-                const SizedBox(height: 8),
-                const Divider(height: 1),
-                const SizedBox(height: 6),
-                ...transaction.breakdown!.map((item) {
-                  final subCat = categories.isEmpty
-                      ? null
-                      : categories.cast<FinanceCategory?>().firstWhere(
-                          (c) => c!.id == item.categoryId,
-                          orElse: () => null,
-                        );
-                  return Padding(
-                    padding: const EdgeInsets.only(left: 8, bottom: 2),
-                    child: Row(
-                      children: [
-                        Text(
-                          subCat?.emoji ?? '❓',
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            subCat?.description ?? '?',
+                          Text(
+                            '\$${_currencyFormat.format(item.amount)}',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.grey[400],
+                              color: Colors.grey[300],
                             ),
                           ),
-                        ),
-                        Text(
-                          '\$${item.amount.toStringAsFixed(2)}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[300],
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }),
-              ],
+                        ],
+                      ),
+                    );
+                  }),
             ],
-          ),
+          ],
         ),
       ),
     );
