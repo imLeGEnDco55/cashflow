@@ -2,11 +2,14 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../models/finance.dart';
 import '../providers/finance_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/stagger_animation.dart';
+
+final _fmt = NumberFormat('#,##0', 'en_US');
 
 class CalculatorScreen extends StatefulWidget {
   const CalculatorScreen({super.key});
@@ -96,9 +99,14 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'Método de Pago',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              Text(
+                _transactionType == TransactionType.income
+                    ? 'Registrar Ingreso'
+                    : 'Registrar Gasto',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 16),
               _PayOption(
@@ -106,25 +114,121 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                 label: 'Efectivo',
                 onTap: () => _handleSubmit('cash'),
               ),
-              // Filter: hide credit cards when registering income
-              ...provider.cards
-                  .where(
-                    (card) =>
-                        _transactionType != TransactionType.income ||
-                        !card.isCredit,
-                  )
-                  .map(
-                    (card) => _PayOption(
-                      emoji: card.colorEmoji,
-                      label: card.name,
-                      subtitle: card.isCredit
-                          ? '(Crédito)'
-                          : card.isDebit
-                          ? '(Débito)'
-                          : null,
-                      onTap: () => _handleSubmit(card.id),
-                    ),
-                  ),
+              _PayOption(
+                emoji: '💳',
+                label: 'Tarjeta',
+                onTap: () {
+                  Navigator.pop(context);
+                  _showCardPicker(provider);
+                },
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancelar'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showCardPicker(FinanceProvider provider) {
+    final isIncome = _transactionType == TransactionType.income;
+
+    final entries = <Widget>[];
+
+    for (final card in provider.cards) {
+      if (card.isCredit) {
+        if (isIncome) continue;
+        final debt = provider.getCardDebt(card.id).clamp(0.0, double.infinity);
+        final limit = card.creditLimit ?? 0;
+        final available = limit - debt;
+        if (limit > 0 && available <= 0) continue;
+        entries.add(
+          ListTile(
+            leading: Text(
+              card.colorEmoji,
+              style: const TextStyle(fontSize: 24),
+            ),
+            title: Text(
+              card.name,
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
+            trailing: Text(
+              '\$${_fmt.format(available)}',
+              style: const TextStyle(
+                color: AppTheme.credit,
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+              ),
+            ),
+            dense: true,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            tileColor: AppTheme.surfaceVariant,
+            onTap: () => _handleSubmit(card.id),
+          ),
+        );
+        entries.add(const SizedBox(height: 6));
+      } else if (card.isDebit) {
+        final balance = provider.getDebitBalance(card.id);
+        if (!isIncome && balance <= 0) continue;
+        entries.add(
+          ListTile(
+            leading: Text(
+              card.colorEmoji,
+              style: const TextStyle(fontSize: 24),
+            ),
+            title: Text(
+              card.name,
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
+            trailing: Text(
+              '\$${_fmt.format(balance)}',
+              style: const TextStyle(
+                color: AppTheme.income,
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+              ),
+            ),
+            dense: true,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            tileColor: AppTheme.surfaceVariant,
+            onTap: () => _handleSubmit(card.id),
+          ),
+        );
+        entries.add(const SizedBox(height: 6));
+      }
+    }
+
+    if (entries.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No hay tarjetas disponibles')),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: AppTheme.surface,
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Seleccionar Tarjeta',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              ...entries,
               const SizedBox(height: 8),
               TextButton(
                 onPressed: () => Navigator.pop(context),
@@ -142,20 +246,21 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     return Consumer<FinanceProvider>(
       builder: (context, provider, _) {
         return SafeArea(
+          bottom: false,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Balance Section
+                // Balance — just the number + badges, no label
                 _buildBalanceCard(provider),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
 
-                // Amount & Type Section integrated
+                // Amount input — unified colored bar with −/+ at edges
                 _buildAmountInput(),
                 const SizedBox(height: 12),
 
-                // Superemoji Row (horizontal)
+                // Superemoji Row (centered)
                 _buildSuperemojiRow(provider),
                 const SizedBox(height: 12),
 
@@ -170,19 +275,16 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                     padding: const EdgeInsets.all(12),
                     child: Column(
                       children: [
-                        // Search Bar inside container
                         _buildSearchBar(),
                         const SizedBox(height: 12),
-
-                        // Scrollable Category Grid
                         Expanded(child: _buildCategoryGrid(provider)),
                       ],
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
 
-                // Action Buttons
+                // Action Button
                 _buildActionButtons(provider),
               ],
             ),
@@ -193,86 +295,58 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   }
 
   Widget _buildBalanceCard(FinanceProvider provider) {
-    final creditDebt = provider.totalCreditDebt;
+    final availableCredit = provider.totalAvailableCredit;
     final debitBalance = provider.totalDebitBalance;
-    final hasDebit = provider.cards.any((c) => c.isDebit);
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Column(
       children: [
-        Column(
+        AnimatedCounter(
+          value: provider.balance,
+          style: TextStyle(
+            fontSize: 44,
+            fontWeight: FontWeight.bold,
+            color: provider.balance >= 0 ? AppTheme.income : AppTheme.expense,
+            height: 1.1,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
-              'Balance',
-              style: TextStyle(color: Colors.grey, fontSize: 14),
-            ),
-            AnimatedCounter(
-              value: provider.balance,
-              style: TextStyle(
-                fontSize: 42,
-                fontWeight: FontWeight.bold,
-                color: provider.balance >= 0
-                    ? AppTheme.income
-                    : AppTheme.expense,
-                height: 1.1,
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: availableCredit > 0
+                    ? AppTheme.credit.withValues(alpha: 0.2)
+                    : Colors.grey.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '📙\$${_fmt.format(availableCredit)}',
+                style: TextStyle(
+                  color: availableCredit > 0 ? AppTheme.credit : Colors.grey,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
-            const SizedBox(height: 6),
-            Wrap(
-              spacing: 8,
-              alignment: WrapAlignment.center,
-              children: [
-                if (provider.cards.any((c) => c.isCredit))
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: creditDebt > 0
-                          ? AppTheme.credit.withValues(alpha: 0.2)
-                          : AppTheme.income.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      creditDebt > 0
-                          ? '💳 -${creditDebt.toStringAsFixed(0)}'
-                          : creditDebt < 0
-                          ? '💳 +${(-creditDebt).toStringAsFixed(0)}'
-                          : '💳 Sin deuda',
-                      style: TextStyle(
-                        color: creditDebt > 0
-                            ? AppTheme.credit
-                            : AppTheme.income,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                if (hasDebit)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: debitBalance >= 0
-                          ? AppTheme.income.withValues(alpha: 0.2)
-                          : AppTheme.expense.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '🏦 ${debitBalance >= 0 ? '+' : ''}${debitBalance.toStringAsFixed(0)}',
-                      style: TextStyle(
-                        color: debitBalance >= 0
-                            ? AppTheme.income
-                            : AppTheme.expense,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-              ],
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: debitBalance > 0
+                    ? AppTheme.income.withValues(alpha: 0.2)
+                    : Colors.grey.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '📗\$${_fmt.format(debitBalance)}',
+                style: TextStyle(
+                  color: debitBalance > 0 ? AppTheme.income : Colors.grey,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
           ],
         ),
@@ -284,63 +358,86 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     final isIncome = _transactionType == TransactionType.income;
     final color = isIncome ? AppTheme.income : AppTheme.expense;
 
-    return IntrinsicHeight(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeInOut,
+      height: 72,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: color.withValues(alpha: 0.6), width: 2),
+      ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
+          // Expense button (left)
+          GestureDetector(
+            onTap: () =>
+                setState(() => _transactionType = TransactionType.expense),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              width: 64,
+              height: 72,
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: color, width: 2),
+                color: !isIncome ? AppTheme.expense : Colors.transparent,
+                borderRadius: const BorderRadius.horizontal(
+                  left: Radius.circular(20),
+                ),
               ),
-              alignment: Alignment.center,
-              child: TextField(
-                controller: _amountController,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                style: TextStyle(
-                  fontSize: 40,
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
-                textAlign: TextAlign.center,
-                decoration: const InputDecoration(
-                  hintText: '\$0',
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.zero,
-                ),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
-                ],
+              child: Icon(
+                Icons.remove,
+                color: !isIncome ? Colors.white : Colors.grey[600],
+                size: 32,
               ),
             ),
           ),
-          const SizedBox(width: 12),
-          // Stacked Compact Toggles on the right
-          Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _CompactTypeButton(
-                icon: Icons.remove,
-                isSelected: !isIncome,
-                color: AppTheme.expense,
-                onTap: () =>
-                    setState(() => _transactionType = TransactionType.expense),
+          // Amount input (center)
+          Expanded(
+            child: TextField(
+              controller: _amountController,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
               ),
-              const SizedBox(height: 8),
-              _CompactTypeButton(
-                icon: Icons.add,
-                isSelected: isIncome,
-                color: AppTheme.income,
-                onTap: () =>
-                    setState(() => _transactionType = TransactionType.income),
+              style: TextStyle(
+                fontSize: 38,
+                fontWeight: FontWeight.bold,
+                color: color,
               ),
-            ],
+              textAlign: TextAlign.center,
+              decoration: InputDecoration(
+                hintText: '\$0',
+                hintStyle: TextStyle(
+                  color: color.withValues(alpha: 0.4),
+                  fontSize: 38,
+                  fontWeight: FontWeight.bold,
+                ),
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.zero,
+              ),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
+              ],
+            ),
+          ),
+          // Income button (right)
+          GestureDetector(
+            onTap: () =>
+                setState(() => _transactionType = TransactionType.income),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 64,
+              height: 72,
+              decoration: BoxDecoration(
+                color: isIncome ? AppTheme.income : Colors.transparent,
+                borderRadius: const BorderRadius.horizontal(
+                  right: Radius.circular(20),
+                ),
+              ),
+              child: Icon(
+                Icons.add,
+                color: isIncome ? Colors.white : Colors.grey[600],
+                size: 32,
+              ),
+            ),
           ),
         ],
       ),
@@ -368,52 +465,62 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
 
     return SizedBox(
       height: 56,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: superemojis.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
-        itemBuilder: (context, index) {
-          final category = superemojis[index];
-          final isSelected = _selectedCategoryId == category.id;
+      child: Center(
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: superemojis.asMap().entries.map((entry) {
+              final index = entry.key;
+              final category = entry.value;
+              final isSelected = _selectedCategoryId == category.id;
 
-          return GestureDetector(
-            onTap: () {
-              HapticFeedback.selectionClick();
-              setState(() => _selectedCategoryId = category.id);
-            },
-            child: Tooltip(
-              message: category.description,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                width: 56,
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? AppTheme.secondary.withValues(alpha: 0.3)
-                      : AppTheme.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: isSelected ? AppTheme.secondary : Colors.white24,
-                    width: isSelected ? 2 : 1,
-                  ),
-                  boxShadow: [
-                    if (isSelected)
-                      BoxShadow(
-                        color: AppTheme.secondary.withValues(alpha: 0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
+              return Padding(
+                padding: EdgeInsets.only(left: index == 0 ? 0 : 12),
+                child: GestureDetector(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    setState(() => _selectedCategoryId = category.id);
+                  },
+                  child: Tooltip(
+                    message: category.description,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppTheme.secondary.withValues(alpha: 0.3)
+                            : AppTheme.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isSelected
+                              ? AppTheme.secondary
+                              : Colors.white24,
+                          width: isSelected ? 2 : 1,
+                        ),
+                        boxShadow: [
+                          if (isSelected)
+                            BoxShadow(
+                              color: AppTheme.secondary.withValues(alpha: 0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                        ],
                       ),
-                  ],
-                ),
-                child: Center(
-                  child: Text(
-                    category.emoji,
-                    style: const TextStyle(fontSize: 28),
+                      child: Center(
+                        child: Text(
+                          category.emoji,
+                          style: const TextStyle(fontSize: 28),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-          );
-        },
+              );
+            }).toList(),
+          ),
+        ),
       ),
     );
   }
@@ -562,59 +669,14 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   }
 }
 
-class _CompactTypeButton extends StatelessWidget {
-  final IconData icon;
-  final bool isSelected;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _CompactTypeButton({
-    required this.icon,
-    required this.isSelected,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: 56,
-        height: 56,
-        decoration: BoxDecoration(
-          color: isSelected ? color : AppTheme.surfaceVariant,
-          shape: BoxShape.circle,
-          boxShadow: [
-            if (isSelected)
-              BoxShadow(
-                color: color.withValues(alpha: 0.4),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
-              ),
-          ],
-        ),
-        child: Icon(
-          icon,
-          color: isSelected ? Colors.white : Colors.grey,
-          size: 32,
-        ),
-      ),
-    );
-  }
-}
-
 class _PayOption extends StatelessWidget {
   final String emoji;
   final String label;
-  final String? subtitle;
   final VoidCallback onTap;
 
   const _PayOption({
     required this.emoji,
     required this.label,
-    this.subtitle,
     required this.onTap,
   });
 
@@ -628,12 +690,6 @@ class _PayOption extends StatelessWidget {
       child: ListTile(
         leading: Text(emoji, style: const TextStyle(fontSize: 24)),
         title: Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
-        subtitle: subtitle != null
-            ? Text(
-                subtitle!,
-                style: TextStyle(color: Colors.grey[400], fontSize: 12),
-              )
-            : null,
         trailing: const Icon(Icons.arrow_forward_ios, size: 14),
         onTap: onTap,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),

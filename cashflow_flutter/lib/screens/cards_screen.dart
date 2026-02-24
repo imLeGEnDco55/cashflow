@@ -19,14 +19,15 @@ class CardsScreen extends StatelessWidget {
         final debitCards = provider.debitCardsWithBalance;
 
         return SafeArea(
+          bottom: false,
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Credit Cards Section
                 if (creditCards.isNotEmpty) ...[
-                  _buildSectionHeader('💳 Crédito', AppTheme.credit),
+                  _buildSectionHeader('📙 Crédito', AppTheme.credit),
                   const SizedBox(height: 8),
                   ...creditCards.map(
                     (item) => _CreditCardTile(card: item.card, debt: item.debt),
@@ -36,7 +37,7 @@ class CardsScreen extends StatelessWidget {
 
                 // Debit Cards Section
                 if (debitCards.isNotEmpty) ...[
-                  _buildSectionHeader('🏦 Débito', AppTheme.income),
+                  _buildSectionHeader('📗 Débito', AppTheme.income),
                   const SizedBox(height: 8),
                   ...debitCards.map(
                     (item) =>

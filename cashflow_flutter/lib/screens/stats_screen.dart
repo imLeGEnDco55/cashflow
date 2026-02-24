@@ -112,8 +112,9 @@ class _StatsScreenState extends State<StatsScreen> {
           ..sort((a, b) => b.value.compareTo(a.value));
 
         return SafeArea(
+          bottom: false,
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [

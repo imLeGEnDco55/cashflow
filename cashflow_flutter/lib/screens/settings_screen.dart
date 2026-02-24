@@ -288,8 +288,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Consumer<FinanceProvider>(
       builder: (context, provider, _) {
         return SafeArea(
+          bottom: false,
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [

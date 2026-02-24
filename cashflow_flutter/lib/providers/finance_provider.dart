@@ -82,6 +82,16 @@ class FinanceProvider extends ChangeNotifier {
         );
   }
 
+  /// Total available credit across all credit cards
+  double get totalAvailableCredit {
+    return _cards.where((c) => c.isCredit).fold(0.0, (total, card) {
+      final limit = card.creditLimit ?? 0;
+      if (limit <= 0) return total;
+      final debt = getCardDebt(card.id).clamp(0.0, double.infinity);
+      return total + (limit - debt).clamp(0.0, double.infinity);
+    });
+  }
+
   /// Credit cards with their current debt
   List<({FinanceCard card, double debt})> get creditCardsWithDebt {
     return _cards

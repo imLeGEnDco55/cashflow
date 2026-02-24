@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'widgets/glow_bottom_bar.dart';
 
 import 'providers/finance_provider.dart';
 import 'screens/calculator_screen.dart';
@@ -80,7 +81,7 @@ class _MainScreenState extends State<MainScreen>
   final List<String> _titles = [
     'CashFlow',
     'Historial',
-    'Presupuestos',
+    'Tarjetas',
     'Estadísticas',
     'Ajustes',
   ];
@@ -113,6 +114,7 @@ class _MainScreenState extends State<MainScreen>
         final goingRight = _currentIndex > _previousIndex;
 
         return Scaffold(
+          extendBody: true,
           appBar: AppBar(
             title: AnimatedSwitcher(
               duration: const Duration(milliseconds: 200),
@@ -148,53 +150,32 @@ class _MainScreenState extends State<MainScreen>
               child: _screens[_currentIndex],
             ),
           ),
-          bottomNavigationBar: Container(
-            decoration: BoxDecoration(
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.3),
-                  blurRadius: 10,
-                  offset: const Offset(0, -2),
-                ),
-              ],
-            ),
-            child: BottomNavigationBar(
-              currentIndex: _currentIndex,
-              onTap: (index) {
-                HapticFeedback.selectionClick();
-                setState(() {
-                  _previousIndex = _currentIndex;
-                  _currentIndex = index;
-                });
-              },
-              items: const [
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.calculate_outlined),
-                  activeIcon: Icon(Icons.calculate),
-                  label: 'Calculadora',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.history_outlined),
-                  activeIcon: Icon(Icons.history),
-                  label: 'Historial',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.credit_card_outlined),
-                  activeIcon: Icon(Icons.credit_card),
-                  label: 'Tarjetas',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.pie_chart_outline),
-                  activeIcon: Icon(Icons.pie_chart),
-                  label: 'Stats',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.settings_outlined),
-                  activeIcon: Icon(Icons.settings),
-                  label: 'Ajustes',
-                ),
-              ],
-            ),
+          bottomNavigationBar: GlowBottomBar(
+            currentIndex: _currentIndex,
+            glowColor: AppTheme.primary,
+            activeColor: AppTheme.primary,
+            backgroundColor: AppTheme.surface,
+            onTap: (index) {
+              HapticFeedback.selectionClick();
+              setState(() {
+                _previousIndex = _currentIndex;
+                _currentIndex = index;
+              });
+            },
+            icons: const [
+              Icons.account_balance_wallet_outlined,
+              Icons.history_outlined,
+              Icons.credit_card_outlined,
+              Icons.pie_chart_outline,
+              Icons.settings_outlined,
+            ],
+            activeIcons: const [
+              Icons.account_balance_wallet,
+              Icons.history,
+              Icons.credit_card,
+              Icons.pie_chart,
+              Icons.settings,
+            ],
           ),
         );
       },
