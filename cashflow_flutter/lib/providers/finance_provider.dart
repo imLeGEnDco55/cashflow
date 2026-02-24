@@ -3,15 +3,12 @@
 library;
 
 import 'dart:convert';
-import 'dart:io';
-import 'package:csv/csv.dart';
 import 'package:flutter/foundation.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/finance.dart';
 import '../services/notification_service.dart';
 import '../services/database_service.dart';
+import '../services/backup_service.dart';
 
 const String _storageKey = 'emoji-finance-data';
 
@@ -20,6 +17,8 @@ class FinanceProvider extends ChangeNotifier {
   List<FinanceCard> _cards = [];
   List<Transaction> _transactions = [];
   bool _remindersEnabled = false;
+  bool _backupsEnabled = true;
+  bool _dailyReminderEnabled = true;
 
   bool _isLoading = true;
 
@@ -28,6 +27,8 @@ class FinanceProvider extends ChangeNotifier {
   List<FinanceCard> get cards => List.unmodifiable(_cards);
   List<Transaction> get transactions => List.unmodifiable(_transactions);
   bool get remindersEnabled => _remindersEnabled;
+  bool get backupsEnabled => _backupsEnabled;
+  bool get dailyReminderEnabled => _dailyReminderEnabled;
   bool get isLoading => _isLoading;
 
   /// Cash balance calculation:
@@ -186,6 +187,10 @@ class FinanceProvider extends ChangeNotifier {
     _transactions.insert(0, transaction);
     notifyListeners();
     DatabaseService.instance.insertTransaction(transaction);
+    // User logged something today, cancel daily reminder
+    if (_dailyReminderEnabled) {
+      NotificationService.cancelDailyReminder();
+    }
   }
 
   /// Delete a transaction
@@ -401,8 +406,29 @@ class FinanceProvider extends ChangeNotifier {
       await NotificationService.schedulePaymentReminders([]);
     }
     notifyListeners();
-    DatabaseService.instance.setSetting(
+    await DatabaseService.instance.setSetting(
       'reminders_enabled',
+      enabled.toString(),
+    );
+  }
+
+  /// Toggle daily backups
+  void toggleBackups(bool enabled) async {
+    _backupsEnabled = enabled;
+    notifyListeners();
+    await DatabaseService.instance.setSetting(
+      'backups_enabled',
+      enabled.toString(),
+    );
+  }
+
+  /// Toggle daily reminder notification
+  void toggleDailyReminder(bool enabled) async {
+    _dailyReminderEnabled = enabled;
+    await NotificationService.scheduleDailyReminder(enabled: enabled);
+    notifyListeners();
+    await DatabaseService.instance.setSetting(
+      'daily_reminder_enabled',
       enabled.toString(),
     );
   }
@@ -425,6 +451,10 @@ class FinanceProvider extends ChangeNotifier {
         _transactions = await db.getTransactions();
         final rem = await db.getSetting('reminders_enabled');
         _remindersEnabled = rem == 'true';
+        final bkp = await db.getSetting('backups_enabled');
+        _backupsEnabled = bkp != 'false'; // default true
+        final dr = await db.getSetting('daily_reminder_enabled');
+        _dailyReminderEnabled = dr != 'false'; // default true
       } else {
         // Migration from SharedPreferences
         final prefs = await SharedPreferences.getInstance();
@@ -457,6 +487,16 @@ class FinanceProvider extends ChangeNotifier {
 
       if (_remindersEnabled) {
         await NotificationService.schedulePaymentReminders(_cards);
+      }
+
+      // Schedule daily reminder
+      await NotificationService.scheduleDailyReminder(
+        enabled: _dailyReminderEnabled,
+      );
+
+      // Perform daily backup
+      if (_backupsEnabled && _transactions.isNotEmpty) {
+        await BackupService.performDailyBackup(exportData());
       }
     } catch (e) {
       debugPrint('Error loading finance data: $e');
@@ -508,56 +548,5 @@ class FinanceProvider extends ChangeNotifier {
       debugPrint('Error importing data: $e');
       return false;
     }
-  }
-
-  /// Export transactions to CSV and share
-  Future<void> exportToCSV() async {
-    final List<List<dynamic>> rows = [];
-    rows.add([
-      'Fecha',
-      'Categoría',
-      'Monto',
-      'Tipo',
-      'Método Pago',
-      'Desglose',
-    ]);
-
-    for (var t in _transactions) {
-      final category =
-          getCategoryById(t.categoryId)?.description ?? 'Desconocida';
-      final paymentMethod = t.paymentMethod == 'cash'
-          ? 'Efectivo'
-          : (getCardById(t.paymentMethod)?.name ?? 'Tarjeta borrada');
-
-      String breakdownStr = '';
-      if (t.breakdown != null && t.breakdown!.isNotEmpty) {
-        breakdownStr = t.breakdown!
-            .map((b) {
-              final cat = getCategoryById(b.categoryId)?.description ?? '?';
-              return '$cat: \$${b.amount}';
-            })
-            .join('; ');
-      }
-
-      rows.add([
-        t.date.toIso8601String().split('T')[0],
-        category,
-        t.amount,
-        t.type.name,
-        paymentMethod,
-        breakdownStr,
-      ]);
-    }
-
-    final csv = const ListToCsvConverter().convert(rows);
-
-    // For Android/iOS
-    final dir = await getApplicationDocumentsDirectory();
-    final fileName =
-        'cashflow_export_${DateTime.now().millisecondsSinceEpoch}.csv';
-    final file = File('${dir.path}/$fileName');
-    await file.writeAsString(csv);
-
-    await Share.shareXFiles([XFile(file.path)], text: 'CashFlow CSV Export');
   }
 }

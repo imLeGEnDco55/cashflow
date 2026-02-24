@@ -430,7 +430,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
         ),
       ),
       confirmDismiss: (direction) async {
-        HapticFeedback.mediumImpact();
+        await HapticFeedback.mediumImpact();
+        if (!mounted) return false;
         if (direction == DismissDirection.startToEnd) {
           // Swipe right = Edit
           _showTransactionEditor(provider, transaction);

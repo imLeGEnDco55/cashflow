@@ -48,8 +48,16 @@ Personal finance manager application migrated from a React/Vite implementation t
   - TransactionCards con bordes/fondo coloreados (verde income, rojo expense, naranja crédito).
   - Balance animado con `AnimatedCounter`, bounce en selección de emoji.
   - Progress bars animados en presupuestos.
-  - Contadores animados en totals y proyecciones de stats.
-  - SnackBars flotantes, PageTransitionsTheme fade.
+- ✅ **Daily Backup & Reminder System**:
+  - `BackupService` guarda JSON diario como `YYMMDD.json` en storage externo.
+  - Auto-backup al abrir la app (si no existe backup del día anterior).
+  - Limpieza automática de backups +30 días.
+  - Notificación diaria a las 9PM: "Psss! No olvides registrar".
+  - Se cancela automáticamente si el usuario registra algo ese día.
+  - Tres toggles en Settings: Recordatorios de pago, Backup Diario, Recordatorio Diario.
+  - Cards con iconos unificados (📙 crédito, 📗 débito).
+  - Two-step payment flow (cash/card → card selection).
+  - Calculator amount bar unificado con botones expense/income.
 
 ## URLs & Resources
 
@@ -57,6 +65,5 @@ Personal finance manager application migrated from a React/Vite implementation t
 
 ## Next Steps
 
-- Cloud backup (deferred).
 - More micro-interactions and haptic feedback.
-- Recurring transactions.
+- Recurring transactions automation.

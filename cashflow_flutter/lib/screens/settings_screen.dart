@@ -103,30 +103,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  void _handleCSVExport() async {
-    final provider = context.read<FinanceProvider>();
-    try {
-      await provider.exportToCSV();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✅ CSV exportado y compartido'),
-            backgroundColor: AppTheme.income,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('❌ Error al exportar: $e'),
-            backgroundColor: AppTheme.expense,
-          ),
-        );
-      }
-    }
-  }
-
   void _confirmDeleteCategory(FinanceCategory category) async {
     final provider = context.read<FinanceProvider>();
     if (!provider.canDeleteCategory(category.id)) {
@@ -305,6 +281,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 // Data management
                 _buildDataSection(),
                 const SizedBox(height: 32),
+
+                // App signature
+                _buildAppSignature(),
+                const SizedBox(height: 16),
               ],
             ),
           ),
@@ -622,6 +602,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
             },
           ),
           const Divider(height: 1),
+          Consumer<FinanceProvider>(
+            builder: (context, provider, child) {
+              return SwitchListTile(
+                secondary: const Icon(Icons.backup, color: Colors.green),
+                title: const Text('Backup Diario'),
+                subtitle: const Text('Guarda YYMMDD.json al abrir la app'),
+                value: provider.backupsEnabled,
+                onChanged: (v) => provider.toggleBackups(v),
+              );
+            },
+          ),
+          const Divider(height: 1),
+          Consumer<FinanceProvider>(
+            builder: (context, provider, child) {
+              return SwitchListTile(
+                secondary: const Icon(Icons.alarm, color: AppTheme.secondary),
+                title: const Text('Recordatorio Diario'),
+                subtitle: const Text('9PM: "Psss! No olvides registrar"'),
+                value: provider.dailyReminderEnabled,
+                onChanged: (v) => provider.toggleDailyReminder(v),
+              );
+            },
+          ),
+          const Divider(height: 1),
           ListTile(
             leading: const Icon(Icons.upload_file, color: AppTheme.primary),
             title: const Text('Exportar datos'),
@@ -631,19 +635,132 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           const Divider(height: 1),
           ListTile(
-            leading: const Icon(Icons.table_chart, color: Colors.green),
-            title: const Text('Exportar CSV'),
-            subtitle: const Text('Para Excel/Sheets'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: _handleCSVExport,
-          ),
-          const Divider(height: 1),
-          ListTile(
             leading: const Icon(Icons.download, color: AppTheme.secondary),
             title: const Text('Importar datos'),
             subtitle: const Text('Restaurar desde archivo JSON'),
             trailing: const Icon(Icons.chevron_right),
             onTap: _handleImport,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAppSignature() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        children: [
+          Container(width: double.infinity, height: 1, color: Colors.grey[800]),
+          const SizedBox(height: 16),
+          Text.rich(
+            TextSpan(
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.grey[600],
+                fontFamily: 'monospace',
+              ),
+              children: const [
+                TextSpan(text: 'Desarrollado por: '),
+                TextSpan(
+                  text: 'Sonnet',
+                  style: TextStyle(color: AppTheme.primary),
+                ),
+                TextSpan(text: ', '),
+                TextSpan(
+                  text: 'Opus',
+                  style: TextStyle(color: AppTheme.primary),
+                ),
+                TextSpan(text: ', '),
+                TextSpan(
+                  text: 'Gemini',
+                  style: TextStyle(color: AppTheme.primary),
+                ),
+              ],
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 4),
+          Text.rich(
+            TextSpan(
+              style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+              children: [
+                const TextSpan(text: 'Vibecodeado por: '),
+                TextSpan(
+                  text: '@elWaiele',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[300],
+                  ),
+                ),
+              ],
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 4),
+          Text.rich(
+            TextSpan(
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.grey[600],
+                fontFamily: 'monospace',
+              ),
+              children: const [
+                TextSpan(text: '2026 | '),
+                TextSpan(
+                  text: 'imLeGEnDco.',
+                  style: TextStyle(color: AppTheme.primary),
+                ),
+                TextSpan(text: ' × '),
+                TextSpan(
+                  text: '+FlowCode',
+                  style: TextStyle(color: AppTheme.primary),
+                ),
+              ],
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 4),
+          Text.rich(
+            TextSpan(
+              style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+              children: [
+                const TextSpan(text: 'Hecho con ❤️ en: '),
+                TextSpan(
+                  text: 'Antigravity',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[400],
+                  ),
+                ),
+                const TextSpan(text: ' & '),
+                TextSpan(
+                  text: 'Lovable',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[400],
+                  ),
+                ),
+              ],
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 4),
+          Text.rich(
+            TextSpan(
+              style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+              children: [
+                const TextSpan(text: 'Version: '),
+                TextSpan(
+                  text: '1.0.0',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[300],
+                  ),
+                ),
+              ],
+            ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
