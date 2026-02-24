@@ -32,7 +32,7 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 3,
+      version: 4,
       onConfigure: _onConfigure,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
@@ -62,7 +62,8 @@ class DatabaseService {
         type TEXT NOT NULL,
         colorEmoji TEXT NOT NULL,
         cutOffDay INTEGER,
-        paymentDay INTEGER
+        paymentDay INTEGER,
+        creditLimit REAL
       )
     ''');
 
@@ -80,14 +81,6 @@ class DatabaseService {
         breakdown TEXT,
         FOREIGN KEY (categoryId) REFERENCES categories (id) ON DELETE CASCADE,
         FOREIGN KEY (targetCardId) REFERENCES cards (id) ON DELETE SET NULL
-      )
-    ''');
-
-    await db.execute('''
-      CREATE TABLE budgets (
-        categoryId TEXT PRIMARY KEY,
-        "limit" REAL NOT NULL,
-        FOREIGN KEY (categoryId) REFERENCES categories (id) ON DELETE CASCADE
       )
     ''');
 
@@ -122,6 +115,12 @@ class DatabaseService {
       await db.execute(
         "ALTER TABLE categories ADD COLUMN type TEXT NOT NULL DEFAULT 'expense'",
       );
+    }
+    if (oldVersion < 4) {
+      // Add creditLimit to cards
+      await db.execute('ALTER TABLE cards ADD COLUMN creditLimit REAL');
+      // Drop budgets table
+      await db.execute('DROP TABLE IF EXISTS budgets');
     }
   }
 
@@ -226,41 +225,6 @@ class DatabaseService {
       item.toMap(),
       where: 'id = ?',
       whereArgs: [item.id],
-    );
-  }
-
-  // Budgets
-  Future<void> saveBudgets(List<Budget> items) async {
-    final db = await instance.database;
-    await db.transaction((txn) async {
-      await txn.delete('budgets');
-      for (var item in items) {
-        await txn.insert('budgets', item.toMap());
-      }
-    });
-  }
-
-  Future<List<Budget>> getBudgets() async {
-    final db = await instance.database;
-    final result = await db.query('budgets');
-    return result.map((json) => Budget.fromMap(json)).toList();
-  }
-
-  Future<void> updateBudget(Budget item) async {
-    final db = await instance.database;
-    await db.insert(
-      'budgets',
-      item.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
-  }
-
-  Future<void> deleteBudget(String categoryId) async {
-    final db = await instance.database;
-    await db.delete(
-      'budgets',
-      where: 'categoryId = ?',
-      whereArgs: [categoryId],
     );
   }
 

@@ -11,7 +11,7 @@ import 'providers/finance_provider.dart';
 import 'screens/calculator_screen.dart';
 import 'screens/history_screen.dart';
 import 'screens/stats_screen.dart';
-import 'screens/budgets_screen.dart';
+import 'screens/cards_screen.dart';
 import 'screens/settings_screen.dart';
 import 'theme/app_theme.dart';
 
@@ -72,7 +72,7 @@ class _MainScreenState extends State<MainScreen>
   final List<Widget> _screens = [
     const CalculatorScreen(),
     const HistoryScreen(),
-    const BudgetsScreen(),
+    const CardsScreen(),
     const StatsScreen(),
     const SettingsScreen(),
   ];
@@ -179,9 +179,9 @@ class _MainScreenState extends State<MainScreen>
                   label: 'Historial',
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.account_balance_wallet_outlined),
-                  activeIcon: Icon(Icons.account_balance_wallet),
-                  label: 'Presupuestos',
+                  icon: Icon(Icons.credit_card_outlined),
+                  activeIcon: Icon(Icons.credit_card),
+                  label: 'Tarjetas',
                 ),
                 BottomNavigationBarItem(
                   icon: Icon(Icons.pie_chart_outline),

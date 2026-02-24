@@ -244,7 +244,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       builder: (context) => _CardEditor(
         card: card,
-        onSave: (name, type, colorEmoji, cutOffDay, paymentDay) {
+        onSave: (name, type, colorEmoji, cutOffDay, paymentDay, creditLimit) {
           final provider = context.read<FinanceProvider>();
           try {
             if (card != null) {
@@ -255,6 +255,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 colorEmoji: colorEmoji,
                 cutOffDay: cutOffDay,
                 paymentDay: paymentDay,
+                creditLimit: creditLimit,
               );
             } else {
               provider.addCard(
@@ -263,6 +264,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 colorEmoji: colorEmoji,
                 cutOffDay: cutOffDay,
                 paymentDay: paymentDay,
+                creditLimit: creditLimit,
               );
             }
             Navigator.pop(context);
@@ -965,6 +967,7 @@ class _CardEditor extends StatefulWidget {
     String colorEmoji,
     int? cutOffDay,
     int? paymentDay,
+    double? creditLimit,
   )
   onSave;
 
@@ -980,6 +983,7 @@ class _CardEditorState extends State<_CardEditor> {
   late TextEditingController _nameController;
   late TextEditingController _cutOffController;
   late TextEditingController _paymentController;
+  late TextEditingController _creditLimitController;
 
   @override
   void initState() {
@@ -993,6 +997,9 @@ class _CardEditorState extends State<_CardEditor> {
     _paymentController = TextEditingController(
       text: widget.card?.paymentDay?.toString() ?? '',
     );
+    _creditLimitController = TextEditingController(
+      text: widget.card?.creditLimit?.toString() ?? '',
+    );
   }
 
   @override
@@ -1000,6 +1007,7 @@ class _CardEditorState extends State<_CardEditor> {
     _nameController.dispose();
     _cutOffController.dispose();
     _paymentController.dispose();
+    _creditLimitController.dispose();
     super.dispose();
   }
 
@@ -1167,6 +1175,18 @@ class _CardEditorState extends State<_CardEditor> {
                 ),
               ],
             ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _creditLimitController,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: const InputDecoration(
+                hintText: 'Límite de crédito (opcional)',
+                prefixText: '\$ ',
+                isDense: true,
+              ),
+            ),
           ],
           const SizedBox(height: 24),
 
@@ -1189,6 +1209,7 @@ class _CardEditorState extends State<_CardEditor> {
                         _colorEmoji,
                         int.tryParse(_cutOffController.text),
                         int.tryParse(_paymentController.text),
+                        double.tryParse(_creditLimitController.text),
                       );
                     }
                   },

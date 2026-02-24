@@ -13,6 +13,7 @@ enum TransactionType {
   expense, // Money going out via cash/debit (-balance)
   creditExpense, // Purchase with credit card (NO balance change, +card debt)
   creditPayment, // Paying off credit card (-balance, -card debt)
+  transfer, // Move money between cash and debit card (neutral in stats)
 }
 
 // Card colors (emoji-based)
@@ -127,6 +128,7 @@ class FinanceCard {
   final String colorEmoji;
   final int? cutOffDay; // For credit cards only (1-31)
   final int? paymentDay; // For credit cards only (1-31)
+  final double? creditLimit; // For credit cards only
 
   FinanceCard({
     String? id,
@@ -135,6 +137,7 @@ class FinanceCard {
     required this.colorEmoji,
     this.cutOffDay,
     this.paymentDay,
+    this.creditLimit,
   }) : id = id ?? _uuid.v4();
 
   FinanceCard copyWith({
@@ -143,6 +146,7 @@ class FinanceCard {
     String? colorEmoji,
     int? cutOffDay,
     int? paymentDay,
+    double? creditLimit,
   }) {
     return FinanceCard(
       id: id,
@@ -151,10 +155,12 @@ class FinanceCard {
       colorEmoji: colorEmoji ?? this.colorEmoji,
       cutOffDay: cutOffDay ?? this.cutOffDay,
       paymentDay: paymentDay ?? this.paymentDay,
+      creditLimit: creditLimit ?? this.creditLimit,
     );
   }
 
   bool get isCredit => type == 'credit';
+  bool get isDebit => type == 'debit';
 
   Map<String, dynamic> toJson() => {
     'id': id,
@@ -163,6 +169,7 @@ class FinanceCard {
     'colorEmoji': colorEmoji,
     if (cutOffDay != null) 'cutOffDay': cutOffDay,
     if (paymentDay != null) 'paymentDay': paymentDay,
+    if (creditLimit != null) 'creditLimit': creditLimit,
   };
 
   factory FinanceCard.fromJson(Map<String, dynamic> json) => FinanceCard(
@@ -172,6 +179,7 @@ class FinanceCard {
     colorEmoji: json['colorEmoji'] as String,
     cutOffDay: json['cutOffDay'] as int?,
     paymentDay: json['paymentDay'] as int?,
+    creditLimit: (json['creditLimit'] as num?)?.toDouble(),
   );
 
   Map<String, dynamic> toMap() => {
@@ -181,6 +189,7 @@ class FinanceCard {
     'colorEmoji': colorEmoji,
     'cutOffDay': cutOffDay,
     'paymentDay': paymentDay,
+    'creditLimit': creditLimit,
   };
 
   factory FinanceCard.fromMap(Map<String, dynamic> map) => FinanceCard(
@@ -190,28 +199,7 @@ class FinanceCard {
     colorEmoji: map['colorEmoji'] as String,
     cutOffDay: map['cutOffDay'] as int?,
     paymentDay: map['paymentDay'] as int?,
-  );
-}
-
-/// Budget model
-class Budget {
-  final String categoryId;
-  final double limit;
-
-  Budget({required this.categoryId, required this.limit});
-
-  Map<String, dynamic> toJson() => {'categoryId': categoryId, 'limit': limit};
-
-  factory Budget.fromJson(Map<String, dynamic> json) => Budget(
-    categoryId: json['categoryId'] as String,
-    limit: (json['limit'] as num).toDouble(),
-  );
-
-  Map<String, dynamic> toMap() => {'categoryId': categoryId, 'limit': limit};
-
-  factory Budget.fromMap(Map<String, dynamic> map) => Budget(
-    categoryId: map['categoryId'] as String,
-    limit: (map['limit'] as num).toDouble(),
+    creditLimit: (map['creditLimit'] as num?)?.toDouble(),
   );
 }
 
@@ -359,14 +347,12 @@ class FinanceData {
   final List<FinanceCategory> categories;
   final List<FinanceCard> cards;
   final List<Transaction> transactions;
-  final List<Budget> budgets;
   final bool remindersEnabled;
 
   FinanceData({
     required this.categories,
     required this.cards,
     required this.transactions,
-    this.budgets = const [],
     this.remindersEnabled = false,
   });
 
@@ -374,7 +360,6 @@ class FinanceData {
     'categories': categories.map((c) => c.toJson()).toList(),
     'cards': cards.map((c) => c.toJson()).toList(),
     'transactions': transactions.map((t) => t.toJson()).toList(),
-    'budgets': budgets.map((b) => b.toJson()).toList(),
     'remindersEnabled': remindersEnabled,
   };
 
@@ -388,11 +373,6 @@ class FinanceData {
     transactions: (json['transactions'] as List)
         .map((t) => Transaction.fromJson(t as Map<String, dynamic>))
         .toList(),
-    budgets: json['budgets'] != null
-        ? (json['budgets'] as List)
-              .map((b) => Budget.fromJson(b as Map<String, dynamic>))
-              .toList()
-        : [],
     remindersEnabled: json['remindersEnabled'] as bool? ?? false,
   );
 }

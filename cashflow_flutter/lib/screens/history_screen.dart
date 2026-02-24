@@ -22,7 +22,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   String _searchQuery = '';
   String? _selectedCategoryId; // null = all
   String _dateFilter = 'all'; // 'today', 'week', 'month', 'custom', 'all'
-  String _typeFilter = 'all'; // 'expense', 'income', 'credit', 'all'
+  String _typeFilter = 'all'; // 'expense', 'income', 'card', 'transfer', 'all'
   DateTimeRange? _customDateRange;
   int _displayLimit = 100;
 
@@ -120,8 +120,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
             .where((t) => t.type == TransactionType.income)
             .toList();
         break;
-      case 'credit':
+      case 'card':
         filtered = filtered.where((t) => t.paymentMethod != 'cash').toList();
+        break;
+      case 'transfer':
+        filtered = filtered
+            .where((t) => t.type == TransactionType.transfer)
+            .toList();
         break;
     }
 
@@ -332,7 +337,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
               'all': 'Todos',
               'expense': '💸 Gastos',
               'income': '💰 Ingresos',
-              'credit': '💳 Crédito',
+              'card': '💳 Tarjeta',
+              'transfer': '🔄 Transferencias',
             },
             onChanged: (v) => setState(() => _typeFilter = v),
           ),

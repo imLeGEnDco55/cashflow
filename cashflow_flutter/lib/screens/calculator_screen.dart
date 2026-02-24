@@ -85,38 +85,6 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     );
   }
 
-  void _handlePayCard(String cardId) {
-    final amount = double.tryParse(_amountController.text);
-    if (amount == null || amount <= 0) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Ingresa un monto')));
-      return;
-    }
-
-    final provider = context.read<FinanceProvider>();
-    provider.addTransaction(
-      amount: amount,
-      type: TransactionType.creditPayment,
-      categoryId: 'credit-payment',
-      paymentMethod: 'cash',
-      targetCardId: cardId,
-    );
-
-    _amountController.clear();
-
-    Navigator.pop(context);
-
-    HapticFeedback.mediumImpact();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('✅ Pago tarjeta'),
-        duration: Duration(seconds: 1),
-        backgroundColor: AppTheme.income,
-      ),
-    );
-  }
-
   void _showPaymentOptions(FinanceProvider provider) {
     showDialog(
       context: context,
@@ -138,50 +106,25 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                 label: 'Efectivo',
                 onTap: () => _handleSubmit('cash'),
               ),
-              ...provider.cards.map(
-                (card) => _PayOption(
-                  emoji: card.colorEmoji,
-                  label: card.name,
-                  subtitle: card.isCredit ? '(Crédito)' : null,
-                  onTap: () => _handleSubmit(card.id),
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancelar'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showPayCardDialog(List<({FinanceCard card, double debt})> cards) {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        backgroundColor: AppTheme.surface,
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Pagar Tarjeta',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              ...cards.map(
-                (item) => _PayOption(
-                  emoji: item.card.colorEmoji,
-                  label: item.card.name,
-                  subtitle: 'Deuda: \$${item.debt.toStringAsFixed(2)}',
-                  onTap: () => _handlePayCard(item.card.id),
-                ),
-              ),
+              // Filter: hide credit cards when registering income
+              ...provider.cards
+                  .where(
+                    (card) =>
+                        _transactionType != TransactionType.income ||
+                        !card.isCredit,
+                  )
+                  .map(
+                    (card) => _PayOption(
+                      emoji: card.colorEmoji,
+                      label: card.name,
+                      subtitle: card.isCredit
+                          ? '(Crédito)'
+                          : card.isDebit
+                          ? '(Débito)'
+                          : null,
+                      onTap: () => _handleSubmit(card.id),
+                    ),
+                  ),
               const SizedBox(height: 8),
               TextButton(
                 onPressed: () => Navigator.pop(context),
@@ -198,8 +141,6 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   Widget build(BuildContext context) {
     return Consumer<FinanceProvider>(
       builder: (context, provider, _) {
-        final creditCardsWithDebt = provider.creditCardsWithDebt;
-
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -242,7 +183,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                 const SizedBox(height: 16),
 
                 // Action Buttons
-                _buildActionButtons(provider, creditCardsWithDebt),
+                _buildActionButtons(provider),
               ],
             ),
           ),
@@ -253,6 +194,8 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
 
   Widget _buildBalanceCard(FinanceProvider provider) {
     final creditDebt = provider.totalCreditDebt;
+    final debitBalance = provider.totalDebitBalance;
+    final hasDebit = provider.cards.any((c) => c.isDebit);
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -274,33 +217,63 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                 height: 1.1,
               ),
             ),
-            if (provider.cards.any((c) => c.isCredit)) ...[
-              const SizedBox(height: 4),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: creditDebt > 0
-                      ? AppTheme.credit.withValues(alpha: 0.2)
-                      : AppTheme.income.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  creditDebt > 0
-                      ? '💳 Deuda: -${creditDebt.toStringAsFixed(0)}'
-                      : creditDebt < 0
-                      ? '💳 Favor: +${(-creditDebt).toStringAsFixed(0)}'
-                      : '💳 Sin deuda',
-                  style: TextStyle(
-                    color: creditDebt > 0 ? AppTheme.credit : AppTheme.income,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 8,
+              alignment: WrapAlignment.center,
+              children: [
+                if (provider.cards.any((c) => c.isCredit))
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: creditDebt > 0
+                          ? AppTheme.credit.withValues(alpha: 0.2)
+                          : AppTheme.income.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      creditDebt > 0
+                          ? '💳 -${creditDebt.toStringAsFixed(0)}'
+                          : creditDebt < 0
+                          ? '💳 +${(-creditDebt).toStringAsFixed(0)}'
+                          : '💳 Sin deuda',
+                      style: TextStyle(
+                        color: creditDebt > 0
+                            ? AppTheme.credit
+                            : AppTheme.income,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ],
+                if (hasDebit)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: debitBalance >= 0
+                          ? AppTheme.income.withValues(alpha: 0.2)
+                          : AppTheme.expense.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '🏦 ${debitBalance >= 0 ? '+' : ''}${debitBalance.toStringAsFixed(0)}',
+                      style: TextStyle(
+                        color: debitBalance >= 0
+                            ? AppTheme.income
+                            : AppTheme.expense,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ],
         ),
       ],
@@ -564,57 +537,26 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     );
   }
 
-  Widget _buildActionButtons(
-    FinanceProvider provider,
-    List<({FinanceCard card, double debt})> creditCardsWithDebt,
-  ) {
+  Widget _buildActionButtons(FinanceProvider provider) {
     return SizedBox(
       height: 56,
-      child: Row(
-        children: [
-          Expanded(
-            child: ElevatedButton(
-              onPressed: () => _showPaymentOptions(provider),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _transactionType == TransactionType.income
-                    ? AppTheme.income
-                    : AppTheme.expense,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                padding: EdgeInsets.zero,
-              ),
-              child: Text(
-                _transactionType == TransactionType.income
-                    ? 'REGISTRAR INGRESO'
-                    : 'REGISTRAR GASTO',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
+      child: ElevatedButton(
+        onPressed: () => _showPaymentOptions(provider),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: _transactionType == TransactionType.income
+              ? AppTheme.income
+              : AppTheme.expense,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
-          if (creditCardsWithDebt.isNotEmpty) ...[
-            const SizedBox(width: 12),
-            SizedBox(
-              width: 56,
-              child: OutlinedButton(
-                onPressed: () => _showPayCardDialog(creditCardsWithDebt),
-                style: OutlinedButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  padding: EdgeInsets.zero,
-                  side: BorderSide(
-                    color: AppTheme.primary.withValues(alpha: 0.5),
-                  ),
-                ),
-                child: const Icon(Icons.credit_card, size: 28),
-              ),
-            ),
-          ],
-        ],
+          padding: EdgeInsets.zero,
+        ),
+        child: Text(
+          _transactionType == TransactionType.income
+              ? 'REGISTRAR INGRESO'
+              : 'REGISTRAR GASTO',
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
       ),
     );
   }

@@ -29,6 +29,8 @@ class TransactionCard extends StatelessWidget {
         return AppTheme.expense;
       case TransactionType.creditExpense:
         return AppTheme.credit;
+      case TransactionType.transfer:
+        return Colors.blue;
     }
   }
 
@@ -41,6 +43,8 @@ class TransactionCard extends StatelessWidget {
         return AppTheme.expense;
       case TransactionType.creditExpense:
         return AppTheme.credit;
+      case TransactionType.transfer:
+        return Colors.blue;
     }
   }
 
@@ -53,17 +57,22 @@ class TransactionCard extends StatelessWidget {
         return '-';
       case TransactionType.creditExpense:
         return '💳 ';
+      case TransactionType.transfer:
+        return '🔄 ';
     }
   }
 
   String get _paymentMethod {
+    if (transaction.type == TransactionType.transfer) {
+      return '🔄 Transferencia';
+    }
     if (transaction.type == TransactionType.creditPayment) {
       return 'Pago tarjeta';
     }
     if (transaction.paymentMethod == 'cash') {
       return '💵 Efectivo';
     }
-    return card != null ? '${card!.colorEmoji} ${card!.name}' : '💳';
+    return card != null ? '💳 ${card!.colorEmoji} ${card!.name}' : '💳';
   }
 
   String? get _badge {
@@ -72,6 +81,8 @@ class TransactionCard extends StatelessWidget {
         return 'CRÉDITO';
       case TransactionType.creditPayment:
         return 'PAGO';
+      case TransactionType.transfer:
+        return 'TRANSFER';
       default:
         return null;
     }

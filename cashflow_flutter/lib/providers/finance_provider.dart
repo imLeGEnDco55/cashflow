@@ -19,7 +19,6 @@ class FinanceProvider extends ChangeNotifier {
   List<FinanceCategory> _categories = List.from(defaultCategories);
   List<FinanceCard> _cards = [];
   List<Transaction> _transactions = [];
-  List<Budget> _budgets = [];
   bool _remindersEnabled = false;
 
   bool _isLoading = true;
@@ -28,25 +27,29 @@ class FinanceProvider extends ChangeNotifier {
   List<FinanceCategory> get categories => List.unmodifiable(_categories);
   List<FinanceCard> get cards => List.unmodifiable(_cards);
   List<Transaction> get transactions => List.unmodifiable(_transactions);
-  List<Budget> get budgets => List.unmodifiable(_budgets);
   bool get remindersEnabled => _remindersEnabled;
   bool get isLoading => _isLoading;
 
-  /// Balance calculation:
-  /// + income
-  /// - expense (cash/debit)
-  /// - credit_payment (when you pay off credit card)
-  /// credit_expense does NOT affect balance
+  /// Cash balance calculation:
+  /// + income (when paymentMethod == 'cash')
+  /// - expense (when paymentMethod == 'cash')
+  /// - credit_payment (when paymentMethod == 'cash')
+  /// - transfer (when paymentMethod == 'cash')
+  /// credit_expense does NOT affect cash balance
+  /// income/expense to debit cards don't affect cash
   double get balance {
     return _transactions.fold(0.0, (acc, t) {
       switch (t.type) {
         case TransactionType.income:
-          return acc + t.amount;
+          return t.paymentMethod == 'cash' ? acc + t.amount : acc;
         case TransactionType.expense:
+          return t.paymentMethod == 'cash' ? acc - t.amount : acc;
         case TransactionType.creditPayment:
-          return acc - t.amount;
+          return t.paymentMethod == 'cash' ? acc - t.amount : acc;
+        case TransactionType.transfer:
+          return t.paymentMethod == 'cash' ? acc - t.amount : acc;
         case TransactionType.creditExpense:
-          return acc; // No balance change
+          return acc;
       }
     });
   }
@@ -90,6 +93,49 @@ class FinanceProvider extends ChangeNotifier {
           ),
         )
         .toList();
+  }
+
+  /// Get balance for a specific debit card
+  double getDebitBalance(String cardId) {
+    return _transactions.fold(0.0, (acc, t) {
+      // Income deposited to this debit card
+      if (t.type == TransactionType.income && t.paymentMethod == cardId) {
+        return acc + t.amount;
+      }
+      // Expenses paid from this debit card
+      if (t.type == TransactionType.expense && t.paymentMethod == cardId) {
+        return acc - t.amount;
+      }
+      // Transfers into this debit card
+      if (t.type == TransactionType.transfer && t.targetCardId == cardId) {
+        return acc + t.amount;
+      }
+      // Transfers OUT of this debit card
+      if (t.type == TransactionType.transfer && t.paymentMethod == cardId) {
+        return acc - t.amount;
+      }
+      // Credit payments FROM this debit card
+      if (t.type == TransactionType.creditPayment &&
+          t.paymentMethod == cardId) {
+        return acc - t.amount;
+      }
+      return acc;
+    });
+  }
+
+  /// Debit cards with their current balance
+  List<({FinanceCard card, double balance})> get debitCardsWithBalance {
+    return _cards
+        .where((c) => c.isDebit)
+        .map((card) => (card: card, balance: getDebitBalance(card.id)))
+        .toList();
+  }
+
+  /// Total balance across all debit cards
+  double get totalDebitBalance {
+    return _cards
+        .where((c) => c.isDebit)
+        .fold(0.0, (total, card) => total + getDebitBalance(card.id));
   }
 
   /// Get category by id
@@ -247,6 +293,7 @@ class FinanceProvider extends ChangeNotifier {
     required String colorEmoji,
     int? cutOffDay,
     int? paymentDay,
+    double? creditLimit,
   }) {
     if (_cards.any((c) => c.name.toLowerCase() == name.toLowerCase())) {
       throw Exception('Ya existe una tarjeta con ese nombre');
@@ -266,6 +313,7 @@ class FinanceProvider extends ChangeNotifier {
       colorEmoji: colorEmoji,
       cutOffDay: cutOffDay,
       paymentDay: paymentDay,
+      creditLimit: creditLimit,
     );
     _cards.add(card);
     notifyListeners();
@@ -280,6 +328,7 @@ class FinanceProvider extends ChangeNotifier {
     String? colorEmoji,
     int? cutOffDay,
     int? paymentDay,
+    double? creditLimit,
   }) {
     final index = _cards.indexWhere((c) => c.id == id);
     if (index != -1) {
@@ -289,6 +338,7 @@ class FinanceProvider extends ChangeNotifier {
         colorEmoji: colorEmoji,
         cutOffDay: cutOffDay,
         paymentDay: paymentDay,
+        creditLimit: creditLimit,
       );
       notifyListeners();
       _saveData();
@@ -314,34 +364,22 @@ class FinanceProvider extends ChangeNotifier {
     );
   }
 
-  /// Add or update a budget
-  void setBudget(String categoryId, double limit) {
-    final index = _budgets.indexWhere((b) => b.categoryId == categoryId);
-    if (limit <= 0) {
-      if (index != -1) {
-        final catId = _budgets[index].categoryId;
-        _budgets.removeAt(index);
-        DatabaseService.instance.deleteBudget(catId);
-      }
-    } else {
-      final budget = Budget(categoryId: categoryId, limit: limit);
-      if (index != -1) {
-        _budgets[index] = budget;
-      } else {
-        _budgets.add(budget);
-      }
-      DatabaseService.instance.updateBudget(budget);
-    }
+  /// Add a transfer (cash→debit or debit→debit)
+  void addTransfer({
+    required double amount,
+    required String targetCardId,
+    String sourcePaymentMethod = 'cash',
+  }) {
+    final transaction = Transaction(
+      amount: amount,
+      type: TransactionType.transfer,
+      categoryId: 'credit-payment',
+      paymentMethod: sourcePaymentMethod,
+      targetCardId: targetCardId,
+    );
+    _transactions.insert(0, transaction);
     notifyListeners();
-  }
-
-  /// Get budget for a category
-  Budget? getBudgetForCategory(String categoryId) {
-    try {
-      return _budgets.firstWhere((b) => b.categoryId == categoryId);
-    } catch (_) {
-      return null;
-    }
+    DatabaseService.instance.insertTransaction(transaction);
   }
 
   /// Toggle reminders
@@ -375,7 +413,6 @@ class FinanceProvider extends ChangeNotifier {
         _categories = await db.getCategories();
         _cards = await db.getCards();
         _transactions = await db.getTransactions();
-        _budgets = await db.getBudgets();
         final rem = await db.getSetting('reminders_enabled');
         _remindersEnabled = rem == 'true';
       } else {
@@ -390,14 +427,12 @@ class FinanceProvider extends ChangeNotifier {
               : List.from(defaultCategories);
           _cards = data.cards;
           _transactions = data.transactions;
-          _budgets = data.budgets;
           _remindersEnabled = data.remindersEnabled;
 
           // Save to SQLite
           await db.saveCategories(_categories);
           await db.saveCards(_cards);
           await db.saveTransactions(_transactions);
-          await db.saveBudgets(_budgets);
           await db.setSetting(
             'reminders_enabled',
             _remindersEnabled.toString(),
@@ -428,7 +463,6 @@ class FinanceProvider extends ChangeNotifier {
       await db.saveCategories(_categories);
       await db.saveCards(_cards);
       await db.saveTransactions(_transactions);
-      await db.saveBudgets(_budgets);
       await db.setSetting('reminders_enabled', _remindersEnabled.toString());
     } catch (e) {
       debugPrint('Error saving finance data: $e');
@@ -441,7 +475,6 @@ class FinanceProvider extends ChangeNotifier {
       categories: _categories,
       cards: _cards,
       transactions: _transactions,
-      budgets: _budgets,
       remindersEnabled: _remindersEnabled,
     );
     return const JsonEncoder.withIndent('  ').convert(data.toJson());
@@ -454,10 +487,9 @@ class FinanceProvider extends ChangeNotifier {
       _categories = data.categories;
       _cards = data.cards;
       _transactions = data.transactions;
-      _budgets = data.budgets;
       _remindersEnabled = data.remindersEnabled;
       notifyListeners();
-      _saveData(); // Correctly implemented to save to DB
+      _saveData();
       if (_remindersEnabled) {
         NotificationService.schedulePaymentReminders(_cards);
       }
